@@ -61,7 +61,7 @@ const HomePage: React.FC = () => {
   );
 
   return (
-    <div className="w-[400px] h-[600px] bg-gradient-to-br from-[#1a1b2e] to-[#2a2d4a] p-6 flex flex-col relative">
+    <div className="w-[400px] h-[600px] bg-gradient-to-br from-[#3f1a66] to-[#28153d] p-6 flex flex-col relative ">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-white">Cryptorage</h1>
         {address ? (

@@ -108,6 +108,7 @@ const ScreenshotManager: React.FC<ScreenshotManagerProps> = ({ walletAddress }) 
       setError('Failed to fetch user teams. Please try again.');
     }
   };
+
   const uploadScreenshot = async () => {
     if (!latestScreenshot) return;
     try {
@@ -199,27 +200,27 @@ const ScreenshotManager: React.FC<ScreenshotManagerProps> = ({ walletAddress }) 
   };
 
   return (
-    <div className="bg-gray-900 text-white w-[350px] h-[500px] flex flex-col">
-      <header className="bg-gray-800 p-3 flex justify-between items-center">
-        <h1 className="text-lg font-semibold">Cryptorage</h1>
-        <div className="flex space-x-2">
+    <div className="bg-[#1d062e91] text-white w-[350px] h-[500px] flex flex-col border border-[#57148a91] rounded-[20px]">
+      <header className="bg-[#a551ff91] p-3 flex justify-center items-center rounded-[20px]">
+        
+        <div className="flex space-x-10">
           <button
             onClick={() => setActiveTab('capture')}
-            className={`p-1 rounded ${activeTab === 'capture' ? 'bg-blue-600' : 'bg-gray-700 hover:bg-gray-600'}`}
+            className={`p-1 rounded ${activeTab === 'capture' ? 'bg-[#c33fdb]' : ' bg-transparent hover:bg-[#b0a7a7]'}`}
             title="Capture"
           >
             <FiCamera size={18} />
           </button>
           <button
             onClick={() => setActiveTab('gallery')}
-            className={`p-1 rounded ${activeTab === 'gallery' ? 'bg-blue-600' : 'bg-gray-700 hover:bg-gray-600'}`}
+            className={`p-1 rounded ${activeTab === 'gallery' ? 'bg-[#c33fdb]' : 'bg-transparent hover:bg-[#b0a7a7]'}`}
             title="Gallery"
           >
             <FiGrid size={18} />
           </button>
           <button
             onClick={() => setActiveTab('team')}
-            className={`p-1 rounded ${activeTab === 'team' ? 'bg-blue-600' : 'bg-gray-700 hover:bg-gray-600'}`}
+            className={`p-1 rounded ${activeTab === 'team' ? 'bg-[#c33fdb]' : 'bg-transparent hover:bg-[#b0a7a7]'}`}
             title="Team"
           >
             <FiUsers size={18} />
@@ -230,17 +231,37 @@ const ScreenshotManager: React.FC<ScreenshotManagerProps> = ({ walletAddress }) 
       <main className="flex-grow overflow-y-auto p-3">
         {activeTab === 'capture' && (
           <div className="flex flex-col h-full">
-            <div className="flex-grow bg-gray-800 rounded-lg overflow-hidden mb-3 flex items-center justify-center">
+            <div className="flex-grow  bg-transparent rounded-lg overflow-hidden mb-3 flex items-center justify-center">
               {latestScreenshot ? (
                 <img src={latestScreenshot} alt="Latest Screenshot" className="max-w-full max-h-full object-contain" />
               ) : (
-                <FiImage size={48} className="text-gray-600" />
+                <div className="relative w-64 h-64 cursor-pointer group" onClick={captureScreenshot}>
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full animate-spin-slow"></div>
+                <div className="absolute inset-2 bg-gray-800 rounded-full flex items-center justify-center overflow-hidden">
+                  <div className="w-full h-full bg-gradient-to-br from-transparent via-blue-500 to-transparent animate-swipe"></div>
+                </div>
+                <div className="absolute inset-4 border-2 border-blue-400 rounded-full animate-pulse"></div>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-24 h-24 bg-gray-800 rounded-full flex items-center justify-center group-hover:animate-capture-click">
+                    <FiCamera size={32} className="text-blue-400 group-hover:text-purple-400 transition-colors duration-300" />
+                  </div>
+                </div>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-48 h-48 border border-purple-500 rounded-full animate-ping opacity-75"></div>
+                </div>
+                <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center">
+                  <div className="w-56 h-56 border-t-2 border-r-2 border-blue-400 rounded-full animate-spin-reverse"></div>
+                </div>
+                <div className="absolute bottom-0 right-0 animate-bounce">
+                  <div className="w-4 h-4 bg-blue-400 rounded-full"></div>
+                </div>
+              </div>
               )}
             </div>
             <div className="flex flex-col space-y-2">
               <button 
                 onClick={captureScreenshot} 
-                className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded transition duration-300"
+                className="bg-[#4c23a399] hover:bg-[#5a3a9d99] text-white py-2 px-2 rounded-full transition duration-300"
               >
                 <FiCamera className="inline-block mr-2" /> Capture Screenshot
               </button>
@@ -285,7 +306,15 @@ const ScreenshotManager: React.FC<ScreenshotManagerProps> = ({ walletAddress }) 
                   </div>
                   <div className="flex-grow mr-2 truncate">
                     <p className="text-sm truncate">{screenshot.fileName}</p>
-                    <p className="text-xs text-gray-400">ID: {screenshot.blobId.slice(0, 10)}...</p>
+                    <div className="flex items-center">
+                      <p className="text-xs text-gray-400">ID: {screenshot.blobId.slice(0, 10)}...</p>
+                      {screenshot.team_id && (
+                        <span className="ml-2 text-xs text-blue-400 flex items-center">
+                          <FiUsers size={12} className="mr-1" />
+                          Shared
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <div className="flex space-x-1">
                     <button onClick={() => downloadScreenshot(screenshot)} className="text-blue-400 hover:text-blue-300" title="Download">
