@@ -9,10 +9,23 @@
   "background": {
     "service_worker": "./background.js"
   },
-  "permissions": ["storage", "activeTab"],
-  "host_permissions": ["http://localhost:3000/*", "https://*.sui.io/*", "https://publisher-devnet.walrus.space/*",
-  "https://aggregator-devnet.walrus.space/*"],
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting",
+    "tabs"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["contentScript.js"]
+    }
+  ],
   "externally_connectable": {
     "matches": ["http://localhost:3000/*"]
   }
+  
 }

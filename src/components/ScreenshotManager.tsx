@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FiCamera, FiUpload, FiDownload, FiLink, FiTrash2, FiImage, FiX, FiUsers, FiGrid, FiPlus } from 'react-icons/fi';
+import { FiCamera, FiUpload, FiDownload, FiLink, FiTrash2, FiImage, FiX, FiUsers, FiGrid, FiPlus, FiMaximize } from 'react-icons/fi';
 import { supabase } from './supabaseClient';
 import TeamManager from './TeamManager';
 
@@ -31,6 +31,7 @@ const ScreenshotManager: React.FC<ScreenshotManagerProps> = ({ walletAddress }) 
   const [previewScreenshot, setPreviewScreenshot] = useState<ScreenshotInfo | null>(null);
   const [selectedTeam, setSelectedTeam] = useState<number | null>(null);
   const [userTeams, setUserTeams] = useState<{ id: number; name: string }[]>([]);
+
 
   useEffect(() => {
     fetchScreenshots();
@@ -78,6 +79,29 @@ const ScreenshotManager: React.FC<ScreenshotManagerProps> = ({ walletAddress }) 
         setLatestScreenshot(dataUrl);
       }
     );
+  };
+
+  const captureFullPageScreenshot = () => {
+    setLoading(true);
+    setError(null);
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      const tab = tabs[0];
+      if (!tab || !tab.id) {
+        setError('No active tab found');
+        setLoading(false);
+        return;
+      }
+      chrome.tabs.sendMessage(tab.id, { action: 'captureFullPage' }, (response) => {
+        setLoading(false);
+        if (chrome.runtime.lastError) {
+          setError(`Failed to capture full page: ${chrome.runtime.lastError.message}`);
+        } else if (!response || !response.success) {
+          setError(`Failed to capture full page: ${response?.error || 'Unknown error'}`);
+        } else {
+          setLatestScreenshot(response.dataUrl);
+        }
+      });
+    });
   };
 
   useEffect(() => {
@@ -265,6 +289,12 @@ const ScreenshotManager: React.FC<ScreenshotManagerProps> = ({ walletAddress }) 
               >
                 <FiCamera className="inline-block mr-2" /> Capture Screenshot
               </button>
+              <button 
+                onClick={captureFullPageScreenshot} 
+                className="bg-[#4c23a399] hover:bg-[#5a3a9d99] text-white py-2 px-2 rounded-full transition duration-300"
+              >
+                <FiMaximize className="inline-block mr-2" /> Capture Full Page
+              </button>
               <div className="flex space-x-2">
                 <select
                   value={selectedTeam?.toString() || ''}
@@ -299,70 +329,70 @@ const ScreenshotManager: React.FC<ScreenshotManagerProps> = ({ walletAddress }) 
               uploadedScreenshots.map((screenshot) => (
                 <div key={screenshot.id} className="bg-gray-800 rounded-lg p-2 flex items-center">
                   <div 
-                    className="w-12 h-12 bg-gray-700 rounded mr-2 flex-shrink-0 overflow-hidden cursor-pointer"
-                    onClick={() => openPreview(screenshot)}
-                  >
-                    <img src={screenshot.blobUrl} alt={screenshot.fileName} className="w-full h-full object-cover" />
-                  </div>
-                  <div className="flex-grow mr-2 truncate">
-                    <p className="text-sm truncate">{screenshot.fileName}</p>
-                    <div className="flex items-center">
-                      <p className="text-xs text-gray-400">ID: {screenshot.blobId.slice(0, 10)}...</p>
-                      {screenshot.team_id && (
-                        <span className="ml-2 text-xs text-blue-400 flex items-center">
-                          <FiUsers size={12} className="mr-1" />
-                          Shared
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex space-x-1">
-                    <button onClick={() => downloadScreenshot(screenshot)} className="text-blue-400 hover:text-blue-300" title="Download">
-                      <FiDownload size={16} />
-                    </button>
-                    <a href={screenshot.suiUrl} target="_blank" rel="noopener noreferrer" className="text-green-400 hover:text-green-300" title="View on Sui Explorer">
-                      <FiLink size={16} />
-                    </a>
-                    <button onClick={() => screenshot.id && deleteScreenshot(screenshot.id)} className="text-red-400 hover:text-red-300" title="Delete">
-                      <FiTrash2 size={16} />
-                    </button>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        )}
-
-        {activeTab === 'team' && (
-          <TeamManager walletAddress={walletAddress} onTeamSelect={setSelectedTeam} />
-        )}
-      </main>
-
-      {error && (
-        <div className="bg-red-500 text-white p-2 text-sm">
-          {error}
-        </div>
-      )}
-
-      {previewScreenshot && (
-        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
-          <div className="bg-gray-800 rounded-lg max-w-[90%] max-h-[90%] overflow-hidden">
-            <div className="p-2 flex justify-between items-center">
-              <h3 className="text-sm truncate">{previewScreenshot.fileName}</h3>
-              <button onClick={closePreview} className="text-gray-400 hover:text-white">
-                <FiX size={20} />
-              </button>
-            </div>
-            <img 
-              src={previewScreenshot.blobUrl} 
-              alt={previewScreenshot.fileName} 
-              className="max-w-full max-h-[calc(90vh-4rem)] object-contain"
-            />
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
-
-export default ScreenshotManager;
+                         className="w-12 h-12 bg-gray-700 rounded mr-2 flex-shrink-0 overflow-hidden cursor-pointer"
+                         onClick={() => openPreview(screenshot)}
+                       >
+                         <img src={screenshot.blobUrl} alt={screenshot.fileName} className="w-full h-full object-cover" />
+                       </div>
+                       <div className="flex-grow mr-2 truncate">
+                         <p className="text-sm truncate">{screenshot.fileName}</p>
+                         <div className="flex items-center">
+                           <p className="text-xs text-gray-400">ID: {screenshot.blobId.slice(0, 10)}...</p>
+                           {screenshot.team_id && (
+                             <span className="ml-2 text-xs text-blue-400 flex items-center">
+                               <FiUsers size={12} className="mr-1" />
+                               Shared
+                             </span>
+                           )}
+                         </div>
+                       </div>
+                       <div className="flex space-x-1">
+                         <button onClick={() => downloadScreenshot(screenshot)} className="text-blue-400 hover:text-blue-300" title="Download">
+                           <FiDownload size={16} />
+                         </button>
+                         <a href={screenshot.suiUrl} target="_blank" rel="noopener noreferrer" className="text-green-400 hover:text-green-300" title="View on Sui Explorer">
+                           <FiLink size={16} />
+                         </a>
+                         <button onClick={() => screenshot.id && deleteScreenshot(screenshot.id)} className="text-red-400 hover:text-red-300" title="Delete">
+                           <FiTrash2 size={16} />
+                         </button>
+                       </div>
+                     </div>
+                   ))
+                 )}
+               </div>
+             )}
+     
+             {activeTab === 'team' && (
+               <TeamManager walletAddress={walletAddress} onTeamSelect={setSelectedTeam} />
+             )}
+           </main>
+     
+           {error && (
+             <div className="bg-red-500 text-white p-2 text-sm">
+               {error}
+             </div>
+           )}
+     
+           {previewScreenshot && (
+             <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
+               <div className="bg-gray-800 rounded-lg max-w-[90%] max-h-[90%] overflow-hidden">
+                 <div className="p-2 flex justify-between items-center">
+                   <h3 className="text-sm truncate">{previewScreenshot.fileName}</h3>
+                   <button onClick={closePreview} className="text-gray-400 hover:text-white">
+                     <FiX size={20} />
+                   </button>
+                 </div>
+                 <img 
+                   src={previewScreenshot.blobUrl} 
+                   alt={previewScreenshot.fileName} 
+                   className="max-w-full max-h-[calc(90vh-4rem)] object-contain"
+                 />
+               </div>
+             </div>
+           )}
+         </div>
+       );
+     };
+     
+     export default ScreenshotManager;
