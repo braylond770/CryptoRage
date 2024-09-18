@@ -61,20 +61,20 @@ const HomePage: React.FC = () => {
   );
 
   return (
-    <div className="w-[400px] h-[600px] bg-gradient-to-br from-[#3f1a66] to-[#28153d] p-6 flex flex-col relative ">
+    <div className="w-[400px] h-[600px] bg-gradient-to-br from-black to-dark-gray p-6 flex flex-col relative">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-white">Cryptorage</h1>
+        <h1 className="text-2xl font-bold text-emerald-400">Cryptorage</h1>
         {address ? (
           <button 
             onClick={() => setShowProfile(true)}
-            className="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded-full transition duration-300"
+            className="bg-emerald-500 hover:bg-emerald-600 text-white p-2 rounded-full transition duration-300"
           >
             <FiUser size={24} />
           </button>
         ) : (
           <button 
             onClick={handleConnect}
-            className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded transition duration-300"
+            className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2 px-4 rounded transition duration-300"
           >
             Connect Wallet
           </button>
@@ -85,7 +85,7 @@ const HomePage: React.FC = () => {
         <ScreenshotManager walletAddress={address} />
       ) : (
         <div className="flex-grow flex items-center justify-center">
-          <p className="text-white text-center text-lg">
+          <p className="text-emerald-300 text-center text-lg">
             Connect your wallet to start using Cryptorage
           </p>
         </div>
