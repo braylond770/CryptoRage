@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from './supabaseClient';
-import { FiUsers, FiMessageSquare, FiPlus, FiSend, FiImage } from 'react-icons/fi';
+import { FiUsers, FiPlus, FiSend, FiImage, FiMoreVertical } from 'react-icons/fi';
 
 interface Team {
   id: number;
@@ -37,6 +37,8 @@ const TeamManager: React.FC<TeamManagerProps> = ({ walletAddress, onScreenshotCa
   const [newMemberAddress, setNewMemberAddress] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isSending, setIsSending] = useState(false);
+  const [showTeamList, setShowTeamList] = useState(true);
+  const [showAddMember, setShowAddMember] = useState(false);
 
   useEffect(() => {
     fetchTeams();
@@ -73,8 +75,6 @@ const TeamManager: React.FC<TeamManagerProps> = ({ walletAddress, onScreenshotCa
       setError('Failed to fetch teams');
     }
   };
-
-
 
   const subscribeToTeamChat = (teamId: number) => {
     const channel = supabase.channel(`team_${teamId}`);
@@ -191,7 +191,6 @@ const TeamManager: React.FC<TeamManagerProps> = ({ walletAddress, onScreenshotCa
           walletAddress,
           team_id: selectedTeam,
           created_at: new Date().toISOString(),
-  
         })
         .select();
 
@@ -223,94 +222,139 @@ const TeamManager: React.FC<TeamManagerProps> = ({ walletAddress, onScreenshotCa
   };
 
   return (
-    <div className="bg-dark-gray p-4 rounded-lg h-full flex flex-col">
-      <h2 className="text-xl font-bold text-emerald-400 mb-4">Teams</h2>
-      
-      <div className="flex mb-4">
-        <input
-          type="text"
-          value={newTeamName}
-          onChange={(e) => setNewTeamName(e.target.value)}
-          placeholder="New Team Name"
-          className="bg-black text-white p-2 rounded flex-grow mr-2"
-        />
-        <button
-          onClick={createTeam}
-          className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2 px-4 rounded"
-        >
-          <FiPlus />
-        </button>
-      </div>
-
-      <div className="flex-grow overflow-y-auto mb-4">
-        {teams.map((team) => (
-          <div
-            key={team.id}
-            onClick={() => setSelectedTeam(team.id)}
-            className={`p-2 rounded cursor-pointer ${
-              selectedTeam === team.id ? 'bg-[#3f4266]' : 'hover:bg-[#3f4266]'
-            }`}
-          >
-            <FiUsers className="inline-block mr-2" />
-            {team.name}
-          </div>
-        ))}
-      </div>
-
-      {selectedTeam && (
-        <>
-          <div className="bg-[#1a1b2e] rounded-lg p-2 h-64 overflow-y-auto mb-4">
-            {teamChat.map((screenshot) => (
-              <div key={screenshot.id} className="mb-2 p-2 bg-[#2c2f4a] rounded">
-                <div className="flex items-center mb-1">
-                  <FiUsers className="mr-2" />
-                  <span className="text-sm text-gray-300">{screenshot.walletAddress}</span>
+    <div className="bg-gray-100 h-[400px] flex flex-col">
+      {showTeamList ? (
+        <div className="flex-grow overflow-y-auto">
+          <h2 className="text-xl font-bold text-gray-800 p-4 bg-white shadow">Teams</h2>
+          <div className="p-4">
+            <div className="flex mb-4">
+              <input
+                type="text"
+                value={newTeamName}
+                onChange={(e) => setNewTeamName(e.target.value)}
+                placeholder="New Team Name"
+                className="bg-white text-gray-800 p-2 rounded-l flex-grow"
+              />
+              <button
+                onClick={createTeam}
+                className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-r"
+              >
+                <FiPlus />
+              </button>
+            </div>
+            {teams.map((team) => (
+              <div
+                key={team.id}
+                onClick={() => {
+                  setSelectedTeam(team.id);
+                  setShowTeamList(false);
+                }}
+                className="p-3 bg-white rounded-lg shadow mb-2 flex items-center cursor-pointer hover:bg-gray-50"
+              >
+                <div className="bg-green-500 text-white rounded-full w-10 h-10 flex items-center justify-center mr-3">
+                  <FiUsers size={20} />
                 </div>
-                <img 
-                  src={screenshot.blobUrl} 
-                  alt={screenshot.fileName} 
-                  className="w-full h-32 object-cover rounded mb-1"
+                <span className="text-gray-800 font-medium">{team.name}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <>
+          <div className="bg-green-500 p-4 flex items-center justify-between shadow">
+            <div className="flex items-center">
+              <button onClick={() => setShowTeamList(true)} className="text-white mr-3">
+                <FiUsers size={24} />
+              </button>
+              <h2 className="text-xl font-bold text-white">
+                {teams.find(t => t.id === selectedTeam)?.name}
+              </h2>
+            </div>
+            <button onClick={() => setShowAddMember(!showAddMember)} className="text-white">
+              <FiMoreVertical size={24} />
+            </button>
+          </div>
+          
+          {showAddMember && (
+            <div className="p-4 bg-white shadow">
+              <div className="flex">
+                <input
+                  type="text"
+                  value={newMemberAddress}
+                  onChange={(e) => setNewMemberAddress(e.target.value)}
+                  placeholder="New Member Address"
+                  className="bg-gray-100 text-gray-800 p-2 rounded-l flex-grow"
                 />
-                {screenshot.extracted_text && (
-                  <div className="text-xs text-gray-400 mt-1">
-                    <strong>Extracted Text:</strong> {screenshot.extracted_text}
+                <button
+                  onClick={addTeamMember}
+                  className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-r"
+                >
+                  <FiPlus />
+                </button>
+              </div>
+            </div>
+          )}
+
+          <div className="flex-grow overflow-y-auto p-4">
+            {teamChat.map((screenshot) => (
+              <div key={screenshot.id} className="mb-4 flex flex-col">
+                <div className="bg-white rounded-lg shadow p-3 max-w-[80%] self-start">
+                  <div className="text-sm text-gray-500 mb-1">{screenshot.walletAddress}</div>
+                  <img 
+                    src={screenshot.blobUrl} 
+                    alt={screenshot.fileName} 
+                    className="w-full h-auto rounded mb-2"
+                  />
+                  {screenshot.extracted_text && (
+                    <div className="text-sm text-gray-700 mt-1">
+                      {screenshot.extracted_text}
+                    </div>
+                  )}
+                  <div className="text-xs text-gray-400 text-right">
+                    {new Date(screenshot.created_at).toLocaleString()}
                   </div>
-                )}
-                <div className="text-xs text-gray-400">
-                  {new Date(screenshot.created_at).toLocaleString()}
                 </div>
               </div>
             ))}
           </div>
+        </>
+      )}
+
+      {selectedTeam && !showTeamList && (
+        <div className="p-4 bg-gray-200 border-t border-gray-300">
           <div className="flex items-center">
             <button
               onClick={onScreenshotCapture}
-              className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded mr-2"
+              className="bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-full p-2 mr-2"
               disabled={isSending}
             >
-              <FiImage />
+              <FiImage size={24} />
             </button>
             <button
               onClick={sendScreenshot}
               disabled={!latestScreenshot || isSending}
               className={`${
-                latestScreenshot && !isSending ? 'bg-blue-500 hover:bg-blue-600' : 'bg-gray-500 cursor-not-allowed'
-              } text-white font-bold py-2 px-4 rounded flex items-center justify-center`}
+                latestScreenshot && !isSending ? 'bg-green-500 hover:bg-green-600' : 'bg-gray-400'
+              } text-white rounded-full p-2 flex items-center justify-center`}
             >
               {isSending ? (
-                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <svg className="animate-spin h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
               ) : (
-                <FiSend />
+                <FiSend size={24} />
               )}
             </button>
           </div>
-        </>
+        </div>
       )}
 
-      {error && <p className="text-red-500 mt-2">{error}</p>}
+      {error && (
+        <div className="p-4 bg-red-100 border-t border-red-200 text-red-700">
+          {error}
+        </div>
+      )}
     </div>
   );
 };

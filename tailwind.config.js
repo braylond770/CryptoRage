@@ -5,6 +5,18 @@ module.exports = {
   ],
   theme: {
     extend: {
+      colors: {
+        primary: 'var(--primary)',
+        secondary: 'var(--secondary)',
+        background: 'var(--background)',
+        surface: 'var(--surface)',
+        text: 'var(--text)',
+        'text-secondary': 'var(--text-secondary)',
+        'accent-orange': 'var(--accent-orange)',
+        'accent-pink': 'var(--accent-pink)',
+        'accent-blue': 'var(--accent-blue)',
+        error: 'var(--error)',
+      },
       animation: {
         'spin-slow': 'spin 8s linear infinite',
         'spin-reverse': 'spin-reverse 12s linear infinite',
