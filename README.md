@@ -104,6 +104,11 @@ The extension uses the following tables in Supabase:
    - `created_at` (timestamp with time zone)
 
 
+## License
+
+[MIT License](LICENSE)
+
+
 
 ## Contributing
 
