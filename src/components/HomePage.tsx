@@ -8,6 +8,7 @@ import { supabase } from "./supabaseClient";
 
 const client = new SuiClient({ url: getFullnodeUrl("testnet") });
 
+
 const HomePage: React.FC = () => {
   const [address, setAddress] = useState<string | null>(null);
   const [showProfile, setShowProfile] = useState(false);
