@@ -1,80 +1,187 @@
-import React, { useState, useEffect } from 'react';
-import { SuiClient, getFullnodeUrl } from '@mysten/sui/client';
-import ScreenshotManager from './ScreenshotManager';
-import { FiUser, FiX, FiPower } from 'react-icons/fi';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useEffect } from "react";
+import { SuiClient, getFullnodeUrl } from "@mysten/sui/client";
+import ScreenshotManager from "./ScreenshotManager";
+import { FiUser, FiX, FiPower } from "react-icons/fi";
+import { motion, AnimatePresence } from "framer-motion";
+import { supabase } from "./supabaseClient";
 
-const client = new SuiClient({ url: getFullnodeUrl('testnet') });
+
+const client = new SuiClient({ url: getFullnodeUrl("testnet") });
 
 const HomePage: React.FC = () => {
   const [address, setAddress] = useState<string | null>(null);
   const [showProfile, setShowProfile] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [username, setUsername] = useState<string>("");
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   useEffect(() => {
     checkConnection();
     chrome.storage.onChanged.addListener((changes, namespace) => {
-      if (namespace === 'local' && changes.connectedAddress) {
-        setAddress(changes.connectedAddress.newValue);
+      if (namespace === "local" && changes.connectedAddress) {
+        const newAddress = changes.connectedAddress.newValue;
+        setAddress(newAddress);
+        if (newAddress) {
+          fetchUsername(newAddress);
+        } else {
+          setUsername("");
+        }
       }
     });
   }, []);
+  useEffect(() => {
+    if (address) {
+      fetchUsername(address);
+    }
+  }, [address]);
+
+  const fetchUsername = async (address: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("users")
+        .select("username")
+        .eq("wallet_address", address)
+        .single();
+
+      if (error) {
+        if (error.code === 'PGRST116') {
+          // No matching row found, which is fine - the user just doesn't have a username yet
+          setUsername("");
+        } else {
+          throw error;
+        }
+      } else if (data) {
+        setUsername(data.username || "");
+      }
+    } catch (error) {
+      console.error("Error fetching username:", error);
+      setError("Failed to fetch username");
+    }
+  };
 
   const checkConnection = () => {
-    chrome.storage.local.get(['connectedAddress'], (result) => {
+    chrome.storage.local.get(["connectedAddress"], (result) => {
       if (result.connectedAddress) {
         setAddress(result.connectedAddress);
       }
     });
   };
 
+
   const handleConnect = () => {
-    chrome.tabs.create({ url: 'http://localhost:3000' });
+    chrome.tabs.create({ url: "http://localhost:3000" });
   };
 
   const handleDisconnect = () => {
-    chrome.storage.local.remove('connectedAddress', () => {
+    chrome.storage.local.remove("connectedAddress", () => {
       setAddress(null);
+      setUsername("");
       setShowProfile(false);
       setError(null);
     });
   };
 
-  const ProfileModal = () => (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="absolute top-0 left-0 w-full h-full bg-black bg-opacity-50 flex items-center justify-center z-50"
-    >
-      <motion.div
-        initial={{ scale: 0.9, y: 20 }}
-        animate={{ scale: 1, y: 0 }}
-        exit={{ scale: 0.9, y: 20 }}
-        className="bg-surface rounded-lg p-6 w-5/6 max-w-md shadow-lg"
-      >
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold text-primary">Profile</h2>
-          <button onClick={() => setShowProfile(false)} className="text-text-secondary hover:text-primary transition-colors">
-            <FiX size={24} />
-          </button>
-        </div>
-        <p className="text-text-secondary mb-2">Wallet Address:</p>
-        <p className="bg-background p-2 rounded text-sm mb-4 break-all text-text">{address}</p>
-        <button 
-          onClick={handleDisconnect}
-          className="w-full bg-error hover:bg-error/80 text-text font-bold py-2 px-4 rounded transition duration-300 flex items-center justify-center"
-        >
-          <FiPower className="mr-2" /> Disconnect
-        </button>
-      </motion.div>
-    </motion.div>
-  );
+  const ProfileModal = () => {
+    const [newUsername, setNewUsername] = useState(username);
 
+    const handleSaveUsername = async () => {
+      try {
+        const { error } = await supabase
+          .from("users")
+          .upsert({ wallet_address: address, username: newUsername });
+
+        if (error) throw error;
+        setUsername(newUsername);
+        setShowProfile(false);
+        setSuccessMessage("Username saved successfully!");
+        setTimeout(() => setSuccessMessage(null), 3000);
+      } catch (error) {
+        console.error("Error saving username:", error);
+        setError("Failed to save username");
+      }
+    };
+
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="absolute top-0 left-0 w-full h-full bg-black bg-opacity-50 flex items-center justify-center z-50"
+      >
+        <motion.div
+          initial={{ scale: 0.9, y: 20 }}
+          animate={{ scale: 1, y: 0 }}
+          exit={{ scale: 0.9, y: 20 }}
+          className="bg-surface rounded-lg p-6 w-5/6 max-w-md shadow-lg"
+        >
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-bold text-primary">Profile</h2>
+            <button
+              onClick={() => setShowProfile(false)}
+              className="text-text-secondary hover:text-primary transition-colors"
+            >
+              <FiX size={24} />
+            </button>
+          </div>
+          {username && (
+            <p className="text-text-secondary mb-4">
+              Current username: <span className="font-bold text-primary">{username}</span>
+            </p>
+          )}
+          <div className="mb-4">
+            <label
+              htmlFor="username"
+              className="block text-sm font-medium text-text-secondary mb-1"
+            >
+              {username ? 'New Username' : 'Username'}
+            </label>
+            <input
+              type="text"
+              id="username"
+              value={newUsername}
+              onChange={(e) => setNewUsername(e.target.value)}
+              className="w-full bg-background text-text p-2 rounded"
+              placeholder={username ? 'Enter new username' : 'Enter username'}
+            />
+          </div>
+          <p className="text-text-secondary mb-2">Wallet Address:</p>
+          <p className="bg-background p-2 rounded text-sm mb-4 break-all text-text">
+            {address}
+          </p>
+          <button
+            onClick={handleSaveUsername}
+            className="w-full bg-primary hover:bg-primary/80 text-text font-bold py-2 px-4 rounded transition duration-300 mb-2"
+          >
+            {username ? 'Update Username' : 'Save Username'}
+          </button>
+          <button
+            onClick={handleDisconnect}
+            className="w-full bg-error hover:bg-error/80 text-text font-bold py-2 px-4 rounded transition duration-300 flex items-center justify-center"
+          >
+            <FiPower className="mr-2" /> Disconnect
+          </button>
+        </motion.div>
+      </motion.div>
+    );
+  };
   return (
     <div className="w-[400px] h-[600px] bg-background p-6 flex flex-col relative overflow-hidden">
       <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-primary/5 to-secondary/5 pointer-events-none"></div>
-      <motion.div 
+     
+      {/* Success Message */}
+      <AnimatePresence>
+        {successMessage && (
+          <motion.div
+            initial={{ opacity: 0, y: -50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -50 }}
+            className="absolute top-4 left-4 right-4 bg-green-500 text-white px-4 py-2 rounded-md shadow-md z-50"
+          >
+            {successMessage}
+          </motion.div>
+        )}
+      </AnimatePresence>
+      <motion.div
         className="flex justify-between items-center mb-6 relative z-10"
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -82,16 +189,20 @@ const HomePage: React.FC = () => {
       >
         <h1 className="text-2xl font-bold text-primary">Cryptorage</h1>
         {address ? (
-          <motion.button 
+          <motion.button
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
             onClick={() => setShowProfile(true)}
-            className="bg-primary hover:bg-primary/80 text-text p-2 rounded-full transition duration-300"
+            className="overflow-hidden rounded-full"
           >
-            <FiUser size={24} />
+            <img
+              src={`https://robohash.org/${address}.png?size=48x48`}
+              alt="User Avatar"
+              className="w-12 h-12"
+            />
           </motion.button>
         ) : (
-          <motion.button 
+          <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={handleConnect}
@@ -101,7 +212,7 @@ const HomePage: React.FC = () => {
           </motion.button>
         )}
       </motion.div>
-      
+
       <AnimatePresence mode="wait">
         {address ? (
           <motion.div
@@ -127,7 +238,7 @@ const HomePage: React.FC = () => {
           </motion.div>
         )}
       </AnimatePresence>
-      
+
       {error && (
         <motion.p
           initial={{ opacity: 0, y: 20 }}
@@ -137,10 +248,8 @@ const HomePage: React.FC = () => {
           {error}
         </motion.p>
       )}
-      
-      <AnimatePresence>
-        {showProfile && <ProfileModal />}
-      </AnimatePresence>
+
+      <AnimatePresence>{showProfile && <ProfileModal />}</AnimatePresence>
     </div>
   );
 };

@@ -69,10 +69,7 @@ const ScreenshotManager: React.FC<ScreenshotManagerProps> = ({ walletAddress }) 
     setNotifications(0);
   };
 
-  const getThumbnailUrl = (originalUrl: string) => {
-    // Append a query parameter to request a smaller image
-    return `${originalUrl}?width=30&quality=30`;
-  };
+
   const LazyImage = ({ src, alt }: { src: string; alt: string }) => {
     const imgRef = useRef<HTMLImageElement | null>(null);
     const [isLoaded, setIsLoaded] = useState(false);
@@ -534,13 +531,8 @@ const ScreenshotManager: React.FC<ScreenshotManagerProps> = ({ walletAddress }) 
                     animate={{ opacity: 1, y: 0 }}
                     whileHover={{ scale: 1.02 }}
                   >
-                    <div 
-                      className="w-12 h-12 bg-surface rounded mr-2 flex-shrink-0 overflow-hidden cursor-pointer"
-                      onClick={() => openPreview(screenshot)}
-                    >
-                      <LazyImage src={getThumbnailUrl(screenshot.blobUrl)} alt={screenshot.fileName} />
-                    </div>
-                    <div className="flex-grow mr-2 truncate">
+                   
+                    <div className="flex-grow mr-2 truncate" onClick={() => openPreview(screenshot)}>
                       <p className="text-sm truncate">{screenshot.fileName}</p>
                       <div className="flex items-center">
                         <p className="text-xs text-text">ID: {screenshot.blobId.slice(0, 10)}...</p>
