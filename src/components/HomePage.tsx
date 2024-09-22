@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 const client = new SuiClient({ url: getFullnodeUrl('testnet') });
 
+
 const HomePage: React.FC = () => {
   const [address, setAddress] = useState<string | null>(null);
   const [showProfile, setShowProfile] = useState(false);
