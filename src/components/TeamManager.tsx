@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "./supabaseClient";
 import { FiUsers, FiPlus, FiSend, FiImage, FiMoreVertical, FiChevronDown, FiChevronUp, FiDownload } from "react-icons/fi";
-
+import { motion, AnimatePresence } from "framer-motion";
 interface Team {
   id: number;
   name: string;
@@ -98,7 +98,7 @@ const TeamManager: React.FC<TeamManagerProps> = ({
     const text = isExpanded ? screenshot.extracted_text : screenshot.extracted_text.slice(0, maxLength);
 
     return (
-      <div className="text-sm text-gray-700 mt-1 break-words">
+      <div className="text-sm text-white mt-1 break-words">
         {text}
         {screenshot.extracted_text.length > maxLength && (
           <>
@@ -325,80 +325,82 @@ const TeamManager: React.FC<TeamManagerProps> = ({
   };
 
   return (
-    <div className="bg-gray-100 h-[400px] flex flex-col">
+    <div className="bg-background text-text h-[480px] flex flex-col rounded-lg overflow-hidden">
       {showTeamList ? (
         <div className="flex-grow overflow-y-auto">
-          <h2 className="text-xl font-bold text-gray-800 p-4 bg-white shadow">
+          <h2 className="text-xl font-bold p-4 bg-surface shadow">
             Teams
           </h2>
           <div className="p-4">
-            <div className="flex mb-4">
+            <div className="flex mb-2">
               <input
                 type="text"
                 value={newTeamName}
                 onChange={(e) => setNewTeamName(e.target.value)}
                 placeholder="New Team Name"
-                className="bg-white text-gray-800 p-2 rounded-l flex-grow"
+                className="bg-surface text-text p-2 rounded-l flex-grow border border-primary/30 focus:outline-none focus:border-primary"
               />
               <button
                 onClick={createTeam}
-                className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-r"
+                className="bg-primary hover:bg-primary/80 text-background font-bold py-2 px-4 rounded-r transition duration-300"
               >
                 <FiPlus />
               </button>
             </div>
             {teams.map((team) => (
-              <div
+              <motion.div
                 key={team.id}
                 onClick={() => {
                   setSelectedTeam(team.id);
                   setShowTeamList(false);
                 }}
-                className="p-3 bg-white rounded-lg shadow mb-2 flex items-center cursor-pointer hover:bg-gray-50"
+                className="p-3 bg-surface rounded-lg shadow mb-2 flex items-center cursor-pointer hover:bg-primary/20 transition duration-300"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
               >
-                <div className="bg-green-500 text-white rounded-full w-10 h-10 flex items-center justify-center mr-3">
+                <div className="bg-primary text-background rounded-full w-10 h-10 flex items-center justify-center mr-3">
                   <FiUsers size={20} />
                 </div>
-                <span className="text-gray-800 font-medium">{team.name}</span>
-              </div>
+                <span className="font-medium">{team.name}</span>
+              </motion.div>
             ))}
           </div>
         </div>
       ) : (
         <>
-          <div className="bg-green-500 p-4 flex items-center justify-between shadow">
+          <div className=" bg-primary p-4 h-5 flex items-center justify-between shadow">
             <div className="flex items-center">
               <button
                 onClick={() => setShowTeamList(true)}
-                className="text-white mr-3"
+                className="text-background mr-3 hover:text-surface transition duration-300"
               >
                 <FiUsers size={24} />
               </button>
-              <h2 className="text-xl font-bold text-white">
+              <h2 className="text-xm font-bold text-background">
                 {teams.find((t) => t.id === selectedTeam)?.name}
               </h2>
             </div>
             <button
               onClick={() => setShowAddMember(!showAddMember)}
-              className="text-white"
+              className="text-background hover:text-surface transition duration-300"
             >
               <FiMoreVertical size={24} />
             </button>
           </div>
 
           {showAddMember && (
-            <div className="p-4 bg-white shadow">
+            <div className="p-4 bg-surface shadow">
               <div className="flex">
                 <input
                   type="text"
                   value={newMemberAddress}
                   onChange={(e) => setNewMemberAddress(e.target.value)}
                   placeholder="New Member Address"
-                  className="bg-gray-100 text-gray-800 p-2 rounded-l flex-grow"
+                  className="bg-background text-text p-2 rounded-l flex-grow border border-primary/30 focus:outline-none focus:border-primary"
                 />
                 <button
                   onClick={addTeamMember}
-                  className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-r"
+                  className="bg-primary hover:bg-primary/80 text-background font-bold py-2 px-4 rounded-r transition duration-300"
                 >
                   <FiPlus />
                 </button>
@@ -406,64 +408,73 @@ const TeamManager: React.FC<TeamManagerProps> = ({
             </div>
           )}
 
-<div className="flex-grow overflow-y-auto p-4">
-  {teamChat.map((screenshot) => (
-    <div key={screenshot.id} className="mb-4 flex flex-col">
-      <div className="bg-white rounded-lg shadow p-3 max-w-[80%] self-start">
-        <div className="text-sm text-gray-500 mb-1 break-words">
-          {usernames[screenshot.walletAddress] || screenshot.walletAddress}
-        </div>
-        <div className="relative group">
-          <img
-            src={screenshot.blobUrl}
-            alt={screenshot.fileName}
-            className="w-full h-auto rounded mb-2 cursor-pointer"
-            onClick={() => handleImagePreview(screenshot.blobUrl)}
-          />
-          <div className="absolute top-2 right-2 flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
-            <button
-              onClick={() => downloadScreenshot(screenshot)}
-              className="bg-white rounded-full p-1 shadow hover:bg-gray-100"
-              title="Download"
-            >
-              <FiDownload size={20} />
-            </button>
+          <div className="flex-grow overflow-y-auto p-4 custom-scrollbar">
+            {teamChat.map((screenshot) => (
+              <motion.div 
+                key={screenshot.id} 
+                className="mb-4 flex flex-col"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+              >
+                <div className=" bg-[#45464a3e] rounded-lg shadow p-3 max-w-[80%] self-start">
+                  <div className="text-sm text-text-secondary mb-1 break-words ">
+                    {usernames[screenshot.walletAddress] || screenshot.walletAddress}
+                  </div>
+                  <div className="relative group">
+                    <img
+                      src={screenshot.blobUrl}
+                      alt={screenshot.fileName}
+                      className="w-full h-auto rounded mb-2 cursor-pointer"
+                      onClick={() => handleImagePreview(screenshot.blobUrl)}
+                    />
+                    <div className="absolute top-2 right-2 flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={() => downloadScreenshot(screenshot)}
+                        className="bg-primary text-white rounded-full p-1 shadow hover:bg-primary/80 transition duration-300"
+                        title="Download"
+                      >
+                        <FiDownload size={20} />
+                      </button>
+                    </div>
+                  </div>
+                  
+                  {renderExtractedText(screenshot)}
+                  <div className="text-xs  text-gray-500 text-right">
+                    {new Date(screenshot.created_at).toLocaleString()}
+                  </div>
+                </div>
+              </motion.div>
+            ))}
           </div>
-        </div>
-        
-        {renderExtractedText(screenshot)}
-        <div className="text-xs text-gray-400 text-right">
-          {new Date(screenshot.created_at).toLocaleString()}
-        </div>
-      </div>
-    </div>
-  ))}
-</div>
         </>
       )}
 
       {selectedTeam && !showTeamList && (
-        <div className="p-4 bg-gray-200 border-t border-gray-300">
+        <div className="pt-2 h-10 bg-surface border-t border-primary/30">
           <div className="flex items-center">
-            <button
+            <motion.button
+              whileHover={{ scale: 0.80 }}
+              whileTap={{ scale: 0.70 }}
               onClick={onScreenshotCapture}
-              className="bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-full p-2 mr-2"
+              className="bg-primary hover:bg-primary/80 text-background rounded-full p-2 mr-2 transition duration-300"
               disabled={isSending}
             >
-              <FiImage size={24} />
-            </button>
-            <button
+              <FiImage size={14} />
+            </motion.button>
+            <motion.button
+            whileHover={{ scale: 0.80 }}
+            whileTap={{ scale: 0.70 }}
               onClick={sendScreenshot}
               disabled={!latestScreenshot || isSending}
               className={`${
                 latestScreenshot && !isSending
-                  ? "bg-green-500 hover:bg-green-600"
-                  : "bg-gray-400"
-              } text-white rounded-full p-2 flex items-center justify-center`}
+                  ? "bg-primary hover:bg-primary/80"
+                  : "bg-secondary"
+              } text-background rounded-full p-2 flex items-center justify-center transition duration-300`}
             >
               {isSending ? (
                 <svg
-                  className="animate-spin h-6 w-6 text-white"
+                  className="animate-spin h-6 w-6  text-teal-500"
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
                   viewBox="0 0 24 24"
@@ -483,24 +494,42 @@ const TeamManager: React.FC<TeamManagerProps> = ({
                   ></path>
                 </svg>
               ) : (
-                <FiSend size={24} />
+                <FiSend size={14} />
               )}
-            </button>
+            </motion.button>
           </div>
         </div>
       )}
-      {previewImage && (
-  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={handleClosePreview}>
-    <div className="max-w-3xl max-h-[90vh] overflow-auto">
-      <img src={previewImage} alt="Preview" className="w-full h-auto" />
-    </div>
-  </div>
-)}
+      
+      <AnimatePresence>
+        {previewImage && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-background bg-opacity-75 flex items-center justify-center z-50" 
+            onClick={handleClosePreview}
+          >
+            <motion.div 
+              initial={{ scale: 0.9 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.9 }}
+              className="max-w-3xl max-h-[90vh] overflow-auto bg-surface rounded-lg shadow-lg"
+            >
+              <img src={previewImage} alt="Preview" className="w-full h-auto" />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {error && (
-        <div className="p-4 bg-red-100 border-t border-red-200 text-red-700">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="p-4 bg-error text-background"
+        >
           {error}
-        </div>
+        </motion.div>
       )}
     </div>
   );

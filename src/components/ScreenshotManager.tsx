@@ -352,62 +352,22 @@ const ScreenshotManager: React.FC<ScreenshotManagerProps> = ({ walletAddress }) 
   };
 
   return (
-    <div className="bg-surface text-text w-full h-auto flex flex-col border border-primary/30 rounded-[20px] overflow-hidden">
+    <div className="bg-gradient-to-br from-background to-surface text-text w-full h-screen flex flex-col border border-primary/30 rounded-[20px] overflow-hidden shadow-lg">
       <motion.header 
-        className="bg-surface p-3 flex justify-between items-center"
+        className="bg-gradient-to-r from-primary/20 to-secondary/20 p-4 flex justify-between items-center"
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.1 }}
       >
-        <div className="flex space-x-6">
-          <motion.button 
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            onClick={() => setActiveTab('capture')} 
-            className={`p-2 rounded ${activeTab === 'capture' ? 'bg-primary text-white' : 'bg-transparent hover:bg-primary/20'}`} 
-            title="Capture"
-          >
-            <FiCamera size={18} />
-          </motion.button>
-          <motion.button 
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            onClick={() => setActiveTab('gallery')} 
-            className={`p-2 rounded ${activeTab === 'gallery' ? 'bg-primary text-white' : 'bg-transparent hover:bg-primary/20'}`} 
-            title="Gallery"
-          >
-            <FiGrid size={18} />
-          </motion.button>
-          <motion.button 
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            onClick={() => setActiveTab('team')} 
-            className={`p-2 rounded ${activeTab === 'team' ? 'bg-primary text-white' : 'bg-transparent hover:bg-primary/20'}`} 
-            title="Team"
-          >
-            <FiUsers size={18} />
-          </motion.button>
+        <div className="flex space-x-4">
+          <TabButton icon={<FiCamera size={18} />} label="Capture" isActive={activeTab === 'capture'} onClick={() => setActiveTab('capture')} />
+          <TabButton icon={<FiGrid size={18} />} label="Gallery" isActive={activeTab === 'gallery'} onClick={() => setActiveTab('gallery')} />
+          <TabButton icon={<FiUsers size={18} />} label="Team" isActive={activeTab === 'team'} onClick={() => setActiveTab('team')} />
         </div>
-        <motion.button 
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-          className="relative p-2 rounded bg-transparent hover:bg-primary/20" 
-          onClick={clearNotifications}
-        >
-          <FiBell size={18} />
-          {notifications > 0 && (
-            <motion.span 
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              className="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center"
-            >
-              {notifications}
-            </motion.span>
-          )}
-        </motion.button>
+        <NotificationButton notifications={notifications} onClick={clearNotifications} />
       </motion.header>
 
-      <main className="flex-grow overflow-y-auto p-3 custom-scrollbar">
+      <main className="flex-grow overflow-y-auto p-4 custom-scrollbar">
         <AnimatePresence mode="wait">
           {activeTab === 'capture' && (
             <motion.div
@@ -417,148 +377,36 @@ const ScreenshotManager: React.FC<ScreenshotManagerProps> = ({ walletAddress }) 
               exit={{ opacity: 0, y: -20 }}
               className="flex flex-col h-full"
             >
-              <div className="flex-grow bg-surface rounded-lg overflow-hidden mb-3 flex items-center justify-center">
-                {latestScreenshot ? (
-                  <img src={latestScreenshot} alt="Latest Screenshot" className="max-w-full max-h-full object-contain" />
-                ) : (
-                  <motion.div 
-                    className="relative w-64 h-64 cursor-pointer group"
-                    onClick={captureScreenshot}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    <div className="absolute inset-0 bg-gradient-to-r from-primary to-secondary rounded-full animate-spin-slow"></div>
-                    <div className="absolute inset-2 bg-surface rounded-full flex items-center justify-center overflow-hidden">
-                      <div className="w-full h-full bg-gradient-to-br from-transparent via-primary to-transparent animate-swipe"></div>
+              <div className="flex flex-col md:flex-row gap-4">
+                <div className="flex-1 ">
+                  <CaptureArea latestScreenshot={latestScreenshot} onCapture={captureScreenshot} />
+                  <div className="flex flex-col space-y-3 mt-4">
+                    <CaptureButton icon={<FiCamera />} label="Capture Screenshot" onClick={captureScreenshot} />
+                    <CaptureButton2 icon={<FiMaximize />} label="Capture Full Page" onClick={captureFullPageScreenshot} />
+                    <div className="flex space-x-2">
+                      <TeamSelector
+                        teams={userTeams}
+                        selectedTeam={selectedTeam}
+                        onChange={(e) => setSelectedTeam(e.target.value ? Number(e.target.value) : null)}
+                      />
+                      <UploadButton onClick={uploadScreenshot} disabled={!latestScreenshot || loading} loading={loading} />
                     </div>
-                    <div className="absolute inset-4 border-2 border-primary rounded-full animate-pulse"></div>
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="w-24 h-24 bg-surface rounded-full flex items-center justify-center group-hover:animate-capture-click">
-                        <FiCamera size={32} className="text-primary group-hover:text-secondary transition-colors duration-300" />
-                      </div>
-                    </div>
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="w-48 h-48 border border-secondary rounded-full animate-ping opacity-75"></div>
-                    </div>
-                    <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center">
-                      <div className="w-56 h-56 border-t-2 border-r-2 border-primary rounded-full animate-spin-reverse"></div>
-                    </div>
-                    <div className="absolute bottom-0 right-0 animate-bounce">
-                      <div className="w-4 h-4 bg-primary rounded-full"></div>
-                    </div>
-                  </motion.div>
-                )}
-              </div>
-              <div className="flex flex-col space-y-2">
-                <motion.button 
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={captureScreenshot} 
-                  className="bg-primary hover:bg-primary/80 text-white py-2 px-2 rounded-full transition duration-300"
-                >
-                  <FiCamera className="inline-block mr-2" /> Capture Screenshot
-                </motion.button>
-                <motion.button 
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={captureFullPageScreenshot} 
-                  className="bg-secondary hover:bg-secondary/80 text-white py-2 px-2 rounded-full transition duration-300"
-                >
-                  <FiMaximize className="inline-block mr-2" /> Capture Full Page
-                </motion.button>
-                <div className="flex space-x-2">
-                  <select
-                    value={selectedTeam?.toString() || ''}
-                    onChange={(e) => setSelectedTeam(e.target.value ? Number(e.target.value) : null)}
-                    className="bg-surface text-text py-2 px-3 rounded flex-grow border border-primary/30 focus:border-primary focus:outline-none"
-                  >
-                    <option value="">Select a team (optional)</option>
-                    {userTeams.map((team) => (
-                      <option key={team.id} value={team.id}>{team.name}</option>
-                    ))}
-                  </select>
-                  
-                  <motion.button 
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={uploadScreenshot} 
-                    className={`flex-shrink-0 ${!latestScreenshot || loading ? 'bg-gray-500 cursor-not-allowed' : 'bg-green-500 hover:bg-green-600'} text-white py-2 px-4 rounded transition duration-300`}
-                    disabled={!latestScreenshot || loading}
-                  >
-                    {loading ? <div className="fancy-loader"></div> : <FiUpload />}
-                  </motion.button>
+                  </div>
                 </div>
-                {extractedText && (
-                  <motion.div 
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="mt-2 p-2 bg-surface rounded border border-primary/30"
-                  >
-                    <h4 className="text-sm font-semibold text-primary mb-1">Extracted Text:</h4>
-                    <div className="max-h-32 overflow-y-auto custom-scrollbar">
-                      <p className="text-xs text-text">{extractedText}</p>
-                    </div>
-                  </motion.div>
-                )}
+                <div className="flex-1 px-2">
+                  {extractedText && <ExtractedTextDisplay text={extractedText} />}
+                </div>
               </div>
             </motion.div>
           )}
 
           {activeTab === 'gallery' && (
-            <motion.div
-              key="gallery"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="space-y-3 max-h-[calc(100vh-12rem)] overflow-y-auto custom-scrollbar"
-            >
-              {uploadedScreenshots.length === 0 ? (
-                <div className="text-center py-8">
-                  <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                  >
-                    <FiImage size={48} className="mx-auto mb-2 text-primary" />
-                  </motion.div>
-                  <p className="text-text">No screenshots yet</p>
-                </div>
-              ) : (
-                uploadedScreenshots.map((screenshot) => (
-                  <motion.div 
-                    key={screenshot.id} 
-                    className="bg-surface rounded-lg p-2 flex items-center"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    whileHover={{ scale: 1.02 }}
-                  >
-                   
-                    <div className="flex-grow mr-2 truncate" onClick={() => openPreview(screenshot)}>
-                      <p className="text-sm truncate">{screenshot.fileName}</p>
-                      <div className="flex items-center">
-                        <p className="text-xs text-text">ID: {screenshot.blobId.slice(0, 10)}...</p>
-                        {screenshot.team_id && (
-                          <span className="ml-2 text-xs text-primary flex items-center">
-                            <FiUsers size={12} className="mr-1" />
-                            Shared
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex space-x-1">
-                      <button onClick={() => downloadScreenshot(screenshot)} className="text-primary hover:text-primary/80" title="Download">
-                        <FiDownload size={16} />
-                      </button>
-                      <a href={screenshot.suiUrl} target="_blank" rel="noopener noreferrer" className="text-secondary hover:text-secondary/80" title="View on Sui Explorer">
-                        <FiLink size={16} />
-                      </a>
-                      <button onClick={() => screenshot.id && deleteScreenshot(screenshot.id)} className="text-red-500 hover:text-red-600" title="Delete">
-                        <FiTrash2 size={16} />
-                      </button>
-                    </div>
-                  </motion.div>
-                ))
-              )}
-            </motion.div>
+            <GalleryView
+              screenshots={uploadedScreenshots}
+              onPreview={openPreview}
+              onDownload={downloadScreenshot}
+              onDelete={deleteScreenshot}
+            />
           )}
 
           {activeTab === 'team' && (
@@ -579,47 +427,216 @@ const ScreenshotManager: React.FC<ScreenshotManagerProps> = ({ walletAddress }) 
         </AnimatePresence>
       </main>
 
-      {error && (
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-red-500 text-white p-2 text-sm"
-        >
-          {error}
-        </motion.div>
-      )}
+      {error && <ErrorDisplay message={error} />}
 
       <AnimatePresence>
         {previewScreenshot && (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50"
-          >
-            <motion.div 
-              initial={{ scale: 0.9 }}
-              animate={{ scale: 1 }}
-              exit={{ scale: 0.9 }}
-              className="bg-surface rounded-lg max-w-[90%] max-h-[90%] overflow-hidden"
-            >
-              <div className="p-2 flex justify-between items-center">
-                <h3 className="text-sm truncate">{previewScreenshot.fileName}</h3>
-                <button onClick={closePreview} className="text-text hover:text-primary">
-                  <FiX size={20} />
-                </button>
-              </div>
-              <img 
-                src={previewScreenshot.blobUrl} 
-                alt={previewScreenshot.fileName} 
-                className="max-w-full max-h-[calc(90vh-4rem)] object-contain"
-              />
-            </motion.div>
-          </motion.div>
+          <ScreenshotPreview
+            screenshot={previewScreenshot}
+            onClose={closePreview}
+          />
         )}
       </AnimatePresence>
     </div>
   );
 };
+
+const TabButton: React.FC<{ icon: React.ReactNode; label: string; isActive: boolean; onClick: () => void }> = ({ icon, label, isActive, onClick }) => (
+  <button 
+    onClick={onClick} 
+    className={`p-2 rounded-full flex items-center space-x-2 transition-colors duration-300 ${isActive ? 'bg-primary text-background' : 'bg-transparent text-text hover:bg-primary/20'}`}
+    title={label}
+  >
+    {icon}
+    <span className="hidden md:inline">{label}</span>
+  </button>
+);
+
+const NotificationButton: React.FC<{ notifications: number; onClick: () => void }> = ({ notifications, onClick }) => (
+  <button 
+    className="relative p-2 rounded-full bg-transparent hover:bg-primary/20 transition-colors duration-300" 
+    onClick={onClick}
+  >
+    <FiBell size={18} />
+    {notifications > 0 && (
+      <span className="absolute top-0 right-0 bg-error text-surface text-xs rounded-full h-4 w-4 flex items-center justify-center">
+        {notifications}
+      </span>
+    )}
+  </button>
+);
+
+const CaptureArea: React.FC<{ latestScreenshot: string | null; onCapture: () => void }> = ({ latestScreenshot, onCapture }) => (
+  <div className=" bg-transparent rounded-lg overflow-hidden mb-3 flex items-center justify-center h-64">
+    {latestScreenshot ? (
+      <img src={latestScreenshot} alt="Latest Screenshot" className="max-w-full max-h-full object-contain" />
+    ) : (
+      <div 
+        className="relative w-64 h-64 cursor-pointer group"
+        onClick={onCapture}
+      >
+        <div className="absolute inset-0 bg-gradient-to-r from-primary to-black rounded-full animate-spin-slow"></div>
+        <div className="absolute inset-2 bg-surface rounded-full flex items-center justify-center overflow-hidden">
+          <div className="w-full h-full bg-gradient-to-br from-transparent via-primary to-transparent animate-swipe"></div>
+        </div>
+        <div className="absolute inset-4 border-2 border-primary rounded-full animate-pulse"></div>
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="w-24 h-24 bg-surface rounded-full flex items-center justify-center group-hover:animate-capture-click">
+            <FiCamera size={32} className="text-primary group-hover:text-accent-teal transition-colors duration-300" />
+          </div>
+        </div>
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="w-48 h-48 border border-secondary rounded-full animate-ping opacity-75"></div>
+        </div>
+        <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center">
+          <div className="w-56 h-56 border-t-2 border-r-2 border-primary rounded-full animate-spin-reverse"></div>
+        </div>
+        <div className="absolute bottom-0 right-0 animate-bounce">
+          <div className="w-4 h-4 bg-primary rounded-full"></div>
+          </div>
+      </div>
+    )}
+  </div>
+);
+
+const CaptureButton: React.FC<{ icon: React.ReactNode; label: string; onClick: () => void }> = ({ icon, label, onClick }) => (
+  <button 
+    onClick={onClick} 
+    className="bg-gradient-to-r from-primary to-secondary hover:from-primary/80 hover:to-secondary/80 text-white py-2 px-4 rounded-full transition duration-300 flex items-center justify-center"
+  >
+    {icon}
+    <span className="ml-2">{label}</span>
+  </button>
+);
+const CaptureButton2: React.FC<{ icon: React.ReactNode; label: string; onClick: () => void }> = ({ icon, label, onClick }) => (
+  <button 
+    onClick={onClick} 
+    className="bg-gradient-to-l from-primary to-secondary hover:from-primary/80 hover:to-secondary/80 text-white py-2 px-4 rounded-full transition duration-300 flex items-center justify-center"
+  >
+    {icon}
+    <span className="ml-2">{label}</span>
+  </button>
+);
+
+const TeamSelector: React.FC<{ teams: { id: number; name: string }[]; selectedTeam: number | null; onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void }> = ({ teams, selectedTeam, onChange }) => (
+  <select
+    value={selectedTeam?.toString() || ''}
+    onChange={onChange}
+    className="bg-surface text-text py-2 px-3 rounded flex-grow border border-primary/30 focus:border-primary focus:outline-none"
+  >
+    <option value="">Select a team (optional)</option>
+    {teams.map((team) => (
+      <option key={team.id} value={team.id}>{team.name}</option>
+    ))}
+  </select>
+);
+
+const UploadButton: React.FC<{ onClick: () => void; disabled: boolean; loading: boolean }> = ({ onClick, disabled, loading }) => (
+  <button 
+    onClick={onClick} 
+    className={`flex-shrink-0 ${disabled ? 'bg-gray-500 cursor-not-allowed' : 'bg-gradient-to-r from-accent-orange to-accent-yellow hover:from-accent-orange/80 hover:to-accent-yellow/80'} text-white py-2 px-4 rounded transition duration-300 flex items-center justify-center`}
+    disabled={disabled}
+  >
+    {loading ? <div className="fancy-loader"></div> : <FiUpload />}
+  </button>
+);
+
+const ExtractedTextDisplay: React.FC<{ text: string }> = ({ text }) => (
+  <div className="h-full p-4 bg-gradient-to-br from-surface to-background rounded border border-primary/30 overflow-hidden">
+    <h4 className="text-lg font-semibold text-primary mb-2">Extracted Text:</h4>
+    <div className="h-[calc(100%-2rem)] overflow-hidden custom-scrollbar">
+      <p className="text-sm text-text whitespace-pre-wrap break-words">{text}</p>
+    </div>
+  </div>
+);
+
+const GalleryView: React.FC<{ screenshots: ScreenshotInfo[]; onPreview: (screenshot: ScreenshotInfo) => void; onDownload: (screenshot: ScreenshotInfo) => void; onDelete: (id: number) => void }> = ({ screenshots, onPreview, onDownload, onDelete }) => (
+  <motion.div
+    key="gallery"
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    exit={{ opacity: 0, y: -20 }}
+    className="space-y-3"
+  >
+    {screenshots.length === 0 ? (
+      <EmptyGallery />
+    ) : (
+      screenshots.map((screenshot) => (
+        <ScreenshotItem
+          key={screenshot.id}
+          screenshot={screenshot}
+          onPreview={onPreview}
+          onDownload={onDownload}
+          onDelete={onDelete}
+        />
+      ))
+    )}
+  </motion.div>
+);
+
+const EmptyGallery: React.FC = () => (
+  <div className="text-center py-8">
+    <div className="animate-spin">
+      <FiImage size={48} className="mx-auto mb-2 text-primary" />
+    </div>
+    <p className="text-text">No screenshots yet</p>
+  </div>
+);
+
+const ScreenshotItem: React.FC<{ screenshot: ScreenshotInfo; onPreview: (screenshot: ScreenshotInfo) => void; onDownload: (screenshot: ScreenshotInfo) => void; onDelete: (id: number) => void }> = ({ screenshot, onPreview, onDownload, onDelete }) => (
+  <div className="bg-gradient-to-br from-surface to-background rounded-lg p-2 flex items-center">
+    <div className="flex-grow mr-2 truncate cursor-pointer" onClick={() => onPreview(screenshot)}>
+      <p className="text-sm truncate">{screenshot.fileName}</p>
+      <div className="flex items-center">
+        <p className="text-xs text-text-secondary">ID: {screenshot.blobId.slice(0, 10)}...</p>
+        {screenshot.team_id && (
+          <span className="ml-2 text-xs text-primary flex items-center">
+            <FiUsers size={12} className="mr-1" />
+            Shared
+          </span>
+        )}
+      </div>
+    </div>
+    <div className="flex space-x-1">
+      <ActionButton icon={<FiDownload size={16} />} onClick={() => onDownload(screenshot)} title="Download" />
+      <ActionButton icon={<FiLink size={16} />} onClick={() => window.open(screenshot.suiUrl, '_blank')} title="View on Sui Explorer" />
+      <ActionButton icon={<FiTrash2 size={16} />} onClick={() => screenshot.id && onDelete(screenshot.id)} title="Delete" className="text-error hover:text-error/80" />
+    </div>
+  </div>
+);
+
+const ActionButton: React.FC<{ icon: React.ReactNode; onClick: () => void; title: string; className?: string }> = ({ icon, onClick, title, className }) => (
+  <button
+    onClick={onClick}
+    className={`text-primary hover:text-primary/80 p-1 rounded transition-colors duration-300 ${className}`}
+    title={title}
+  >
+    {icon}
+  </button>
+);
+
+const ErrorDisplay: React.FC<{ message: string }> = ({ message }) => (
+  <div className="bg-gradient-to-r from-error to-error/80 text-background p-2 text-sm rounded-b-lg">
+    {message}
+  </div>
+);
+
+const ScreenshotPreview: React.FC<{ screenshot: ScreenshotInfo; onClose: () => void }> = ({ screenshot, onClose }) => (
+  <div className="fixed inset-0 bg-background bg-opacity-75 flex items-center justify-center z-50">
+    <div className="bg-gradient-to-br from-surface to-background rounded-lg max-w-[90%] max-h-[90%] overflow-hidden shadow-lg">
+      <div className="p-2 flex justify-between items-center bg-gradient-to-r from-primary/20 to-secondary/20">
+        <h3 className="text-sm truncate">{screenshot.fileName}</h3>
+        <button onClick={onClose} className="text-text hover:text-primary p-1 rounded transition-colors duration-300">
+          <FiX size={20} />
+        </button>
+      </div>
+      <img 
+        src={screenshot.blobUrl} 
+        alt={screenshot.fileName} 
+        className="max-w-full max-h-[calc(90vh-4rem)] object-contain"
+      />
+    </div>
+  </div>
+);
 
 export default ScreenshotManager;

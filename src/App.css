@@ -5,17 +5,18 @@
 @tailwind utilities;
 
 :root {
-    --primary: #6C63FF;       /* Vibrant purple */
-    --secondary: #4CAF50;     /* Green */
-    --background: #1A1B2E;    /* Dark blue-gray */
-    --surface: #2C2F4A;       /* Slightly lighter blue-gray */
-    --text: #E0E0E0;          /* Light gray */
-    --text-secondary: #9CA3AF; /* Medium gray */
-    --accent-orange: #FF9F43; /* Orange */
-    --accent-pink: #FF6B6B;   /* Pink */
-    --accent-blue: #54A0FF;   /* Light blue */
-    --error: #FF4757;         /* Red */
-  }
+  --primary: #00ADB5;       /* Teal */
+  --secondary: #000000;     /* Dark Gray */
+  --background: #000000;    /* Darkest Gray */
+  --surface: #000000;       /* Dark Gray (same as secondary for consistency) */
+  --text: #EEEEEE;          /* Light Gray */
+  --text-secondary: #EEEEEE; /* Light Gray (same as text for consistency) */
+  --accent-orange: #00ADB5; /* Teal (same as primary for consistency) */
+  --accent-beige: #EEEEEE;  /* Light Gray (same as text for consistency) */
+  --accent-teal: #00ADB5;   /* Teal (same as primary for consistency) */
+  --accent-blue: #00ADB5;   /* Teal (same as primary for consistency) */
+  --error: #FF6B6B;         /* Soft Red (adjusted for better contrast) */
+}
   
   body {
     font-family: 'Inter', sans-serif;

@@ -3,6 +3,9 @@
   "name": "Cryptorage",
   "version": "1.0",
   "description": "Sui wallet integration for Cryptorage",
+  "icons": {
+       "128": "./icon128.png"
+     },
   "action": {
     "default_popup": "index.html"
   },

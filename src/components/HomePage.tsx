@@ -107,7 +107,7 @@ const HomePage: React.FC = () => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="absolute top-0 left-0 w-full h-full bg-black bg-opacity-50 flex items-center justify-center z-50"
+        className="fixed inset-0 bg-background/80 flex items-center justify-center z-50"
       >
         <motion.div
           initial={{ scale: 0.9, y: 20 }}
@@ -141,23 +141,23 @@ const HomePage: React.FC = () => {
               id="username"
               value={newUsername}
               onChange={(e) => setNewUsername(e.target.value)}
-              className="w-full bg-background text-text p-2 rounded"
+              className="w-full bg-background text-text p-2 rounded border border-primary/30 focus:border-primary focus:outline-none"
               placeholder={username ? 'Enter new username' : 'Enter username'}
             />
           </div>
           <p className="text-text-secondary mb-2">Wallet Address:</p>
-          <p className="bg-background p-2 rounded text-sm mb-4 break-all text-text">
+          <p className="bg-background p-2 rounded text-sm mb-4 break-all text-text border border-primary/30">
             {address}
           </p>
           <button
             onClick={handleSaveUsername}
-            className="w-full bg-primary hover:bg-primary/80 text-text font-bold py-2 px-4 rounded transition duration-300 mb-2"
+            className="w-full bg-primary hover:bg-primary/80 text-surface font-bold py-2 px-4 rounded transition duration-300 mb-2"
           >
             {username ? 'Update Username' : 'Save Username'}
           </button>
           <button
             onClick={handleDisconnect}
-            className="w-full bg-error hover:bg-error/80 text-text font-bold py-2 px-4 rounded transition duration-300 flex items-center justify-center"
+            className="w-full bg-error hover:bg-error/80 text-surface font-bold py-2 px-4 rounded transition duration-300 flex items-center justify-center"
           >
             <FiPower className="mr-2" /> Disconnect
           </button>
@@ -165,10 +165,12 @@ const HomePage: React.FC = () => {
       </motion.div>
     );
   };
+
+
   return (
-    <div className="w-[400px] h-[600px] bg-background p-6 flex flex-col relative overflow-hidden">
-      <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-primary/5 to-secondary/5 pointer-events-none"></div>
-     
+    <div className="w-[400px] h-auto  p-6 flex flex-col relative overflow-hidden rounded-lg shadow-2xl">
+      <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-blue-500/10 to-purple-500/10 pointer-events-none"></div>
+      
       {/* Success Message */}
       <AnimatePresence>
         {successMessage && (
@@ -182,24 +184,25 @@ const HomePage: React.FC = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
       <motion.div
-        className="flex justify-between items-center mb-6 relative z-10"
+        className="flex justify-between items-center mb-2 relative z-10"
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.2 }}
       >
-        <h1 className="text-2xl font-bold text-primary">Cryptorage</h1>
+        <h1 className="text-xl font-extrabold text-white">Cryptorage</h1>
         {address ? (
           <motion.button
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
             onClick={() => setShowProfile(true)}
-            className="overflow-hidden rounded-full"
+            className="overflow-hidden rounded-full border-2 border-white shadow-lg"
           >
             <img
               src={`https://robohash.org/${address}.png?size=48x48`}
               alt="User Avatar"
-              className="w-12 h-12"
+              className="w-8 h-8"
             />
           </motion.button>
         ) : (
@@ -207,7 +210,7 @@ const HomePage: React.FC = () => {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={handleConnect}
-            className="bg-primary hover:bg-primary/80 text-text font-bold py-2 px-4 rounded transition duration-300"
+            className="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded-full transition duration-300 shadow-md"
           >
             Connect Wallet
           </motion.button>
@@ -233,7 +236,7 @@ const HomePage: React.FC = () => {
             exit={{ opacity: 0, y: -20 }}
             className="flex-grow flex items-center justify-center"
           >
-            <p className="text-primary text-center text-lg animate-float">
+            <p className="text-white text-center text-lg animate-bounce bg-gray-700 p-4 rounded-lg shadow-md">
               Connect your wallet to start using Cryptorage
             </p>
           </motion.div>
@@ -244,7 +247,7 @@ const HomePage: React.FC = () => {
         <motion.p
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-red-500 mt-4 text-center"
+          className="text-red-500 mt-4 text-center bg-gray-700 p-2 rounded-lg shadow-md"
         >
           {error}
         </motion.p>
