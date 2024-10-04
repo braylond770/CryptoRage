@@ -25,7 +25,7 @@ Cryptorage is a Chrome extension that integrates with Sui wallet to provide secu
 
 1. Clone the repository:
    ```
-   git clone [https://github.com/Rushikeshnimkar/cryptorage-login.git](https://github.com/Rushikeshnimkar/CryptoRage.git)
+   git clone https://github.com/Rushikeshnimkar/cryptorage-login.git
    cd cryptorage
    ```
 
@@ -43,7 +43,7 @@ Cryptorage is a Chrome extension that integrates with Sui wallet to provide secu
 
 4. Build the extension:
    ```
-   npm run build
+   npm run build:extension
    ```
 
 5. Load the extension in Chrome:
