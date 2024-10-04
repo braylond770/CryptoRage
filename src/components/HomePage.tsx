@@ -70,7 +70,14 @@ const HomePage: React.FC = () => {
 
 
   const handleConnect = () => {
-    chrome.tabs.create({ url: "http://localhost:3000" });
+    // Get the extension ID
+    const extensionId = chrome.runtime.id;
+
+    // Create the URL with the extension ID as a query parameter
+    const url = `https://cryptorage-login.vercel.app?extensionId=${extensionId}`;
+
+    // Open the webpage with the extension ID
+    chrome.tabs.create({ url });
   };
 
   const handleDisconnect = () => {
@@ -168,7 +175,7 @@ const HomePage: React.FC = () => {
 
 
   return (
-    <div className="w-[400px] h-auto  p-6 flex flex-col relative overflow-hidden rounded-lg shadow-2xl">
+    <div className="w-[400px] min-h-[600px]  p-6 flex flex-col relative overflow-hidden rounded-lg shadow-2xl">
       <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-blue-500/10 to-purple-500/10 pointer-events-none"></div>
       
       {/* Success Message */}

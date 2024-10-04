@@ -408,7 +408,7 @@ const TeamManager: React.FC<TeamManagerProps> = ({
             </div>
           )}
 
-          <div className="flex-grow overflow-y-auto p-4 custom-scrollbar">
+          <div className="flex-grow overflow-y-auto p-2 custom-scrollbar">
             {teamChat.map((screenshot) => (
               <motion.div 
                 key={screenshot.id} 
@@ -450,7 +450,7 @@ const TeamManager: React.FC<TeamManagerProps> = ({
       )}
 
       {selectedTeam && !showTeamList && (
-        <div className="pt-2 h-10 bg-surface border-t border-primary/30">
+        <div className="pt-2 h-14 bg-surface border-t border-primary/30">
           <div className="flex items-center">
             <motion.button
               whileHover={{ scale: 0.80 }}
@@ -459,7 +459,7 @@ const TeamManager: React.FC<TeamManagerProps> = ({
               className="bg-primary hover:bg-primary/80 text-background rounded-full p-2 mr-2 transition duration-300"
               disabled={isSending}
             >
-              <FiImage size={14} />
+              <FiImage size={16} />
             </motion.button>
             <motion.button
             whileHover={{ scale: 0.80 }}
@@ -494,7 +494,7 @@ const TeamManager: React.FC<TeamManagerProps> = ({
                   ></path>
                 </svg>
               ) : (
-                <FiSend size={14} />
+                <FiSend size={16} />
               )}
             </motion.button>
           </div>

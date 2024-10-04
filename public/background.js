@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 /// <reference types="chrome"/>
 
 chrome.runtime.onMessageExternal.addListener(
@@ -140,3 +141,6 @@ function stitchScreenshots(screenshots, width, height) {
     });
   });
 }
+chrome.management.getAll((extensions) => {
+  console.log(extensions);
+});
