@@ -1,3 +1,6 @@
+
+![cryptorage landing page](https://github.com/user-attachments/assets/2776f2b6-17b5-41e8-8308-dc294a386c37)
+
 # Cryptorage Chrome Extension
 
 Cryptorage is a Chrome extension that integrates with Sui wallet to provide secure storage and sharing of screenshots within teams. It allows users to capture, store, and share screenshots with team members, all while leveraging blockchain technology for enhanced security and transparency.
