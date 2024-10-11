@@ -1,3 +1,6 @@
+
+![cryptorage landing page](https://github.com/user-attachments/assets/2776f2b6-17b5-41e8-8308-dc294a386c37)
+
 # Cryptorage Chrome Extension
 
 Cryptorage is a Chrome extension that integrates with Sui wallet to provide secure storage and sharing of screenshots within teams. It allows users to capture, store, and share screenshots with team members, all while leveraging blockchain technology for enhanced security and transparency.
@@ -43,7 +46,7 @@ Cryptorage is a Chrome extension that integrates with Sui wallet to provide secu
 
 4. Build the extension:
    ```
-   npm run build
+   npm run build:extension
    ```
 
 5. Load the extension in Chrome:
@@ -51,24 +54,16 @@ Cryptorage is a Chrome extension that integrates with Sui wallet to provide secu
    - Enable "Developer mode"
    - Click "Load unpacked" and select the `build` folder from your project directory
 
-6. Set up the wallet connection:
-   - Clone and run the wallet connection repository:
-     ```
-     git clone https://github.com/Rushikeshnimkar/cryptorage-login.git
-     cd cryptorage-login
-     npm install
-     npm start
-     ```
-   This will start the wallet connection service on `http://localhost:3000`
 
 ## Usage
 
 1. Click on the Cryptorage extension icon in Chrome to open the popup.
-2. Connect your Sui wallet when prompted. This will redirect you to the wallet connection page (http://localhost:3000).
-3. After successful connection, you'll be redirected back to the extension popup.
-4. Create or join a team to start sharing screenshots.
-5. Use the capture button to take a full-page screenshot of the current tab.
-6. View, download, or share captured screenshots within your team.
+2. Connect your Sui wallet when prompted.
+3. After successful connection, you can start capturing and storing screenshots.
+4. Use the capture button to take a screenshot of the current tab.
+5. The screenshot will be automatically encrypted and stored on the Sui blockchain.
+6. Access your stored screenshots from any device by connecting your wallet.
+
 
 ## Supabase Tables Structure
 
