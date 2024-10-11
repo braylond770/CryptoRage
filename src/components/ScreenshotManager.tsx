@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiCamera, FiUpload, FiDownload, FiLink, FiTrash2, FiImage, FiX, FiUsers, FiGrid, FiMaximize, FiBell } from 'react-icons/fi';
+import { FiCamera, FiUpload, FiDownload, FiLink, FiTrash2, FiImage, FiX, FiUsers, FiGrid, FiMaximize, FiBell, FiChevronUp, FiChevronDown, FiLoader } from 'react-icons/fi';
 import { supabase } from './supabaseClient';
 import TeamManager from './TeamManager';
 
@@ -21,6 +21,7 @@ interface ScreenshotInfo {
   walletAddress: string;
   team_id?: number | null;
   teams?: { name: string } | null;
+  websiteName: string; // Add this new field
 }
 
 interface ScreenshotManagerProps {
@@ -38,6 +39,8 @@ const ScreenshotManager: React.FC<ScreenshotManagerProps> = ({ walletAddress }) 
   const [userTeams, setUserTeams] = useState<{ id: number; name: string }[]>([]);
   const [extractedText, setExtractedText] = useState<string | null>(null);
   const [notifications, setNotifications] = useState<number>(0);
+  const [websiteName, setWebsiteName] = useState<string>('');
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     fetchScreenshots();
@@ -187,14 +190,22 @@ const ScreenshotManager: React.FC<ScreenshotManagerProps> = ({ walletAddress }) 
   };
 
   const captureScreenshot = () => {
-    chrome.tabs.captureVisibleTab(
-      chrome.windows.WINDOW_ID_CURRENT,
-      { format: 'png' },
-      async (dataUrl) => {
-        setLatestScreenshot(dataUrl);
-        await extractTextFromImage(dataUrl);
+    chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
+      const activeTab = tabs[0];
+      if (activeTab && activeTab.url) {
+        const url = new URL(activeTab.url);
+        setWebsiteName(url.hostname);
       }
-    );
+      
+      chrome.tabs.captureVisibleTab(
+        chrome.windows.WINDOW_ID_CURRENT,
+        { format: 'png' },
+        async (dataUrl) => {
+          setLatestScreenshot(dataUrl);
+          await extractTextFromImage(dataUrl);
+        }
+      );
+    });
   };
 
   const captureFullPageScreenshot = () => {
@@ -256,7 +267,7 @@ const ScreenshotManager: React.FC<ScreenshotManagerProps> = ({ walletAddress }) 
       setError(null);
       const response = await fetch(latestScreenshot);
       const blob = await response.blob();
-      const file = new File([blob], `screenshot-${Date.now()}.png`, { type: 'image/png' });
+      const file = new File([blob], `${websiteName}-${Date.now()}.png`, { type: 'image/png' });
       const uploadResponse = await fetch(`${PUBLISHER_URL}/v1/store?epochs=${EPOCHS}`, {
         method: "PUT",
         body: file,
@@ -278,7 +289,8 @@ const ScreenshotManager: React.FC<ScreenshotManagerProps> = ({ walletAddress }) 
           blobUrl, 
           suiUrl,
           walletAddress,
-          team_id: selectedTeam
+          team_id: selectedTeam,
+          websiteName // Add this new field
         };
         
         if (extractedText) {
@@ -300,7 +312,8 @@ const ScreenshotManager: React.FC<ScreenshotManagerProps> = ({ walletAddress }) 
 
         setUploadedScreenshots(prev => [...prev, newScreenshot]);
         setActiveTab('gallery');
-        setExtractedText(null); // Reset extracted text after upload
+        setExtractedText(null);
+        setWebsiteName(''); // Reset website name after upload
       }
     } catch (err: any) {
       setError(`Failed to upload screenshot. Please try again.`);
@@ -550,28 +563,92 @@ const ExtractedTextDisplay: React.FC<{ text: string }> = ({ text }) => (
   </div>
 );
 
-const GalleryView: React.FC<{ screenshots: ScreenshotInfo[]; onPreview: (screenshot: ScreenshotInfo) => void; onDownload: (screenshot: ScreenshotInfo) => void; onDelete: (id: number) => void }> = ({ screenshots, onPreview, onDownload, onDelete }) => (
-  <motion.div
-    key="gallery"
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    exit={{ opacity: 0, y: -20 }}
-    className="space-y-3"
-  >
-    {screenshots.length === 0 ? (
-      <EmptyGallery />
-    ) : (
-      screenshots.map((screenshot) => (
-        <ScreenshotItem
-          key={screenshot.id}
-          screenshot={screenshot}
-          onPreview={onPreview}
-          onDownload={onDownload}
-          onDelete={onDelete}
-        />
-      ))
-    )}
-  </motion.div>
+const GalleryView: React.FC<{ screenshots: ScreenshotInfo[]; onPreview: (screenshot: ScreenshotInfo) => void; onDownload: (screenshot: ScreenshotInfo) => void; onDelete: (id: number) => void }> = ({ screenshots, onPreview, onDownload, onDelete }) => {
+  const [expandedWebsites, setExpandedWebsites] = useState<Record<string, boolean>>({});
+
+  const groupedScreenshots = screenshots.reduce((acc, screenshot) => {
+    if (!acc[screenshot.websiteName]) {
+      acc[screenshot.websiteName] = [];
+    }
+    acc[screenshot.websiteName].push(screenshot);
+    return acc;
+  }, {} as Record<string, ScreenshotInfo[]>);
+
+  const toggleWebsite = (websiteName: string) => {
+    setExpandedWebsites(prev => ({
+      ...prev,
+      [websiteName]: !prev[websiteName]
+    }));
+  };
+
+  return (
+    <motion.div
+      key="gallery"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      className="space-y-3"
+    >
+      {Object.keys(groupedScreenshots).length === 0 ? (
+        <EmptyGallery />
+      ) : (
+        Object.entries(groupedScreenshots).map(([websiteName, websiteScreenshots]) => (
+          <WebsiteGroup
+            key={websiteName}
+            websiteName={websiteName}
+            screenshots={websiteScreenshots}
+            isExpanded={expandedWebsites[websiteName] || false}
+            onToggle={() => toggleWebsite(websiteName)}
+            onPreview={onPreview}
+            onDownload={onDownload}
+            onDelete={onDelete}
+          />
+        ))
+      )}
+    </motion.div>
+  );
+};
+
+const WebsiteGroup: React.FC<{
+  websiteName: string;
+  screenshots: ScreenshotInfo[];
+  isExpanded: boolean;
+  onToggle: () => void;
+  onPreview: (screenshot: ScreenshotInfo) => void;
+  onDownload: (screenshot: ScreenshotInfo) => void;
+  onDelete: (id: number) => void;
+}> = ({ websiteName, screenshots, isExpanded, onToggle, onPreview, onDownload, onDelete }) => (
+  <div className="bg-gradient-to-br from-surface to-background rounded-lg overflow-hidden">
+    <button
+      onClick={onToggle}
+      className="w-full p-3 flex items-center justify-between text-left bg-primary/10 hover:bg-primary/20 transition-colors duration-300"
+    >
+      <span className="font-medium">{websiteName}</span>
+      <span className="text-primary">
+        {isExpanded ? <FiChevronUp /> : <FiChevronDown />}
+      </span>
+    </button>
+    <AnimatePresence>
+      {isExpanded && (
+        <motion.div
+          initial={{ height: 0, opacity: 0 }}
+          animate={{ height: 'auto', opacity: 1 }}
+          exit={{ height: 0, opacity: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          {screenshots.map((screenshot) => (
+            <ScreenshotItem
+              key={screenshot.id}
+              screenshot={screenshot}
+              onPreview={onPreview}
+              onDownload={onDownload}
+              onDelete={onDelete}
+            />
+          ))}
+        </motion.div>
+      )}
+    </AnimatePresence>
+  </div>
 );
 
 const EmptyGallery: React.FC = () => (
@@ -586,7 +663,8 @@ const EmptyGallery: React.FC = () => (
 const ScreenshotItem: React.FC<{ screenshot: ScreenshotInfo; onPreview: (screenshot: ScreenshotInfo) => void; onDownload: (screenshot: ScreenshotInfo) => void; onDelete: (id: number) => void }> = ({ screenshot, onPreview, onDownload, onDelete }) => (
   <div className="bg-gradient-to-br from-surface to-background rounded-lg p-2 flex items-center">
     <div className="flex-grow mr-2 truncate cursor-pointer" onClick={() => onPreview(screenshot)}>
-      <p className="text-sm truncate">{screenshot.fileName}</p>
+      <p className="text-sm truncate">{screenshot.websiteName}</p>
+      <p className="text-xs text-text-secondary truncate">{screenshot.fileName}</p>
       <div className="flex items-center">
         <p className="text-xs text-text-secondary">ID: {screenshot.blobId.slice(0, 10)}...</p>
         {screenshot.team_id && (
@@ -621,22 +699,40 @@ const ErrorDisplay: React.FC<{ message: string }> = ({ message }) => (
   </div>
 );
 
-const ScreenshotPreview: React.FC<{ screenshot: ScreenshotInfo; onClose: () => void }> = ({ screenshot, onClose }) => (
-  <div className="fixed inset-0 bg-background bg-opacity-75 flex items-center justify-center z-50">
-    <div className="bg-gradient-to-br from-surface to-background rounded-lg max-w-[90%] max-h-[90%] overflow-hidden shadow-lg">
-      <div className="p-2 flex justify-between items-center bg-gradient-to-r from-primary/20 to-secondary/20">
-        <h3 className="text-sm truncate">{screenshot.fileName}</h3>
-        <button onClick={onClose} className="text-text hover:text-primary p-1 rounded transition-colors duration-300">
-          <FiX size={20} />
-        </button>
+const ScreenshotPreview: React.FC<{ screenshot: ScreenshotInfo; onClose: () => void }> = ({ screenshot, onClose }) => {
+  const [isLoading, setIsLoading] = useState(true);
+
+  return (
+    <div className="fixed inset-0 bg-background bg-opacity-75 flex items-center justify-center z-50 ">
+      <div className="bg-gradient-to-br from-surface to-background rounded-lg max-w-[90%] max-h-[90%] overflow-hidden shadow-lg">
+        <div className="p-2 flex justify-between items-center bg-gradient-to-r from-primary/20 to-secondary/20 h-20">
+          <h3 className="text-sm truncate">{screenshot.fileName}</h3>
+          <button onClick={onClose} className="text-text hover:text-primary p-5  rounded transition-colors duration-300">
+            <FiX size={20} />
+          </button>
+        </div>
+        <div className="relative h-auto">
+          {isLoading && (
+            <div className="absolute inset-0  flex items-center justify-center bg-background bg-opacity-50">
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+              >
+                <FiLoader size={40} className="text-primary" />
+              </motion.div>
+            </div>
+          )}
+          <img 
+            src={screenshot.blobUrl} 
+            alt={screenshot.fileName} 
+            className="max-w-full max-h-[calc(90vh-4rem)] object-contain"
+            onLoad={() => setIsLoading(false)}
+          />
+        </div>
       </div>
-      <img 
-        src={screenshot.blobUrl} 
-        alt={screenshot.fileName} 
-        className="max-w-full max-h-[calc(90vh-4rem)] object-contain"
-      />
     </div>
-  </div>
-);
+  );
+};
+
 
 export default ScreenshotManager;

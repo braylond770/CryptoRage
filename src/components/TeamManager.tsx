@@ -16,6 +16,7 @@ interface ScreenshotInfo {
   team_id: number;
   created_at: string;
   extracted_text?: string;
+  websiteName: string; // Add this new field
 }
 
 interface TeamManagerProps {
@@ -46,6 +47,8 @@ const TeamManager: React.FC<TeamManagerProps> = ({
   const [usernames, setUsernames] = useState<Record<string, string>>({});
   const [expandedTexts, setExpandedTexts] = useState<Record<number, boolean>>({});
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [websiteName, setWebsiteName] = useState<string>('');
+
   
 
   useEffect(() => {
@@ -281,17 +284,18 @@ const TeamManager: React.FC<TeamManagerProps> = ({
 
       // Save to Supabase
       const { data, error } = await supabase
-        .from("screenshots")
-        .insert({
-          fileName: file.name,
-          blobId,
-          blobUrl,
-          suiUrl,
-          walletAddress,
-          team_id: selectedTeam,
-          created_at: new Date().toISOString(),
-        })
-        .select();
+      .from("screenshots")
+      .insert({
+        fileName: file.name,
+        blobId,
+        blobUrl,
+        suiUrl,
+        walletAddress,
+        team_id: selectedTeam,
+        created_at: new Date().toISOString(),
+        websiteName: websiteName,
+      })
+      .select();
 
       if (error) throw error;
 
@@ -408,7 +412,7 @@ const TeamManager: React.FC<TeamManagerProps> = ({
             </div>
           )}
 
-          <div className="flex-grow overflow-y-auto p-2 custom-scrollbar">
+<div className="flex-grow overflow-y-auto p-2 custom-scrollbar">
             {teamChat.map((screenshot) => (
               <motion.div 
                 key={screenshot.id} 
@@ -416,10 +420,11 @@ const TeamManager: React.FC<TeamManagerProps> = ({
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
               >
-                <div className=" bg-[#45464a3e] rounded-lg shadow p-3 max-w-[80%] self-start">
-                  <div className="text-sm text-text-secondary mb-1 break-words ">
+                <div className="bg-[#45464a3e] rounded-lg shadow p-3 max-w-[80%] self-start">
+                  <div className="text-sm text-text-secondary mb-1 break-words">
                     {usernames[screenshot.walletAddress] || screenshot.walletAddress}
                   </div>
+                  <div className="text-xs text-primary mb-1">{screenshot.websiteName}</div>
                   <div className="relative group">
                     <img
                       src={screenshot.blobUrl}
@@ -439,7 +444,7 @@ const TeamManager: React.FC<TeamManagerProps> = ({
                   </div>
                   
                   {renderExtractedText(screenshot)}
-                  <div className="text-xs  text-gray-500 text-right">
+                  <div className="text-xs text-gray-500 text-right">
                     {new Date(screenshot.created_at).toLocaleString()}
                   </div>
                 </div>
@@ -448,7 +453,6 @@ const TeamManager: React.FC<TeamManagerProps> = ({
           </div>
         </>
       )}
-
       {selectedTeam && !showTeamList && (
         <div className="pt-2 h-14 bg-surface border-t border-primary/30">
           <div className="flex items-center">
