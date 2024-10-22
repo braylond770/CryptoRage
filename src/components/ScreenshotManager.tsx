@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiCamera, FiUpload, FiDownload, FiLink, FiTrash2, FiImage, FiX, FiUsers, FiGrid, FiMaximize, FiBell, FiChevronUp, FiChevronDown, FiLoader, FiList } from 'react-icons/fi';
+import { FiCamera, FiUpload, FiDownload, FiLink, FiTrash2, FiImage, FiX, FiUsers, FiGrid, FiMaximize, FiBell, FiChevronUp, FiChevronDown, FiLoader, FiGlobe } from 'react-icons/fi';
 import { supabase } from './supabaseClient';
 import TeamManager from './TeamManager';
 import WebpageContentView, { WebpageContent } from './WebpageContentView';
@@ -22,7 +22,7 @@ interface ScreenshotInfo {
   walletAddress: string;
   team_id?: number | null;
   teams?: { name: string } | null;
-  websiteName: string; 
+  websiteName: string; // Add this new field
 }
 
 interface ScreenshotManagerProps {
@@ -53,6 +53,30 @@ const ScreenshotManager: React.FC<ScreenshotManagerProps> = ({ walletAddress }) 
   useEffect(() => {
     fetchScreenshots();
   }, [walletAddress, selectedTeam]);
+
+  useEffect(() => {
+    const subscription = supabase
+      .channel(`user_${walletAddress}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'screenshots',
+          filter: `team_id=eq.${selectedTeam}`
+        }, (payload) => {
+        if (payload.new.team_id && payload.new.walletAddress !== walletAddress) {
+          setNotifications((prev) => prev + 1);
+        }
+      })
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [walletAddress]);
+
+ 
 
   const fetchWebpageContent = () => {
     chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
@@ -191,40 +215,23 @@ const ScreenshotManager: React.FC<ScreenshotManagerProps> = ({ walletAddress }) 
     }
   };
 
-  const captureScreenshot = (imageUrl?: string) => {
-    if (imageUrl) {
-      // If an imageUrl is provided, use it directly
-      setLatestScreenshot(imageUrl);
-      extractTextFromImage(imageUrl);
-      // Get the website name from the image URL
-      try {
-        const url = new URL(imageUrl);
+  const captureScreenshot = () => {
+    chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
+      const activeTab = tabs[0];
+      if (activeTab && activeTab.url) {
+        const url = new URL(activeTab.url);
         setWebsiteName(url.hostname);
-      } catch (error) {
-        console.error("Invalid URL:", error);
-        setWebsiteName('Unknown');
       }
-    } else {
-      // Otherwise, capture the current tab
-      chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
-        const activeTab = tabs[0];
-        if (activeTab && activeTab.url) {
-          const url = new URL(activeTab.url);
-          setWebsiteName(url.hostname);
+      
+      chrome.tabs.captureVisibleTab(
+        chrome.windows.WINDOW_ID_CURRENT,
+        { format: 'png' },
+        async (dataUrl) => {
+          setLatestScreenshot(dataUrl);
+          await extractTextFromImage(dataUrl);
         }
-        
-        chrome.tabs.captureVisibleTab(
-          chrome.windows.WINDOW_ID_CURRENT,
-          { format: 'png' },
-          async (dataUrl) => {
-            setLatestScreenshot(dataUrl);
-            await extractTextFromImage(dataUrl);
-          }
-        );
-      });
-    }
-    // Switch to the capture tab after capturing
-    setActiveTab('capture');
+      );
+    });
   };
 
   const captureFullPageScreenshot = () => {
@@ -383,8 +390,6 @@ const ScreenshotManager: React.FC<ScreenshotManagerProps> = ({ walletAddress }) 
     setPreviewScreenshot(null);
   };
 
-  
-
   return (
     <div className="bg-gradient-to-br from-background to-surface text-text w-full h-screen flex flex-col border border-primary/30 rounded-[20px] overflow-hidden shadow-lg">
       <motion.header 
@@ -397,9 +402,9 @@ const ScreenshotManager: React.FC<ScreenshotManagerProps> = ({ walletAddress }) 
           <TabButton icon={<FiCamera size={18} />} label="Capture" isActive={activeTab === 'capture'} onClick={() => setActiveTab('capture')} />
           <TabButton icon={<FiGrid size={18} />} label="Gallery" isActive={activeTab === 'gallery'} onClick={() => setActiveTab('gallery')} />
           <TabButton icon={<FiUsers size={18} />} label="Team" isActive={activeTab === 'team'} onClick={() => setActiveTab('team')} />
-          <TabButton icon={<FiList size={18} />} label="Webpage" isActive={activeTab === 'webpage'} onClick={() => setActiveTab('webpage')} />
+          <TabButton icon={<FiGlobe size={18} />} label="Webpage" isActive={activeTab === 'webpage'} onClick={() => setActiveTab('webpage')} />
         </div>
-      
+       
       </motion.header>
 
       <main className="flex-grow overflow-y-auto p-4 custom-scrollbar">
@@ -459,13 +464,12 @@ const ScreenshotManager: React.FC<ScreenshotManagerProps> = ({ walletAddress }) 
               />
             </motion.div>
           )}
-
-{activeTab === 'webpage' && (
-  <WebpageContentView 
-    content={webpageContent}
-    onCapture={captureScreenshot}
-  />
-)}
+          {activeTab === 'webpage' && (
+      <WebpageContentView 
+        content={webpageContent}
+        onCapture={captureScreenshot}
+      />
+    )}
         </AnimatePresence>
       </main>
 
@@ -493,6 +497,7 @@ const TabButton: React.FC<{ icon: React.ReactNode; label: string; isActive: bool
     <span className="hidden md:inline">{label}</span>
   </button>
 );
+
 
 
 const CaptureArea: React.FC<{ latestScreenshot: string | null; onCapture: () => void }> = ({ latestScreenshot, onCapture }) => (

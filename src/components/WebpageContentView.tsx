@@ -89,13 +89,7 @@ const WebpageContentView: React.FC<WebpageContentViewProps> = ({ content, onCapt
                       >
                         <FiDownload size={20} />
                       </button>
-                      <button
-                        onClick={() => onCapture(item)}
-                        className="p-2 bg-primary rounded-full text-white hover:bg-primary-dark transition-colors"
-                        title="Capture"
-                      >
-                        <FiCamera size={20} />
-                      </button>
+                     
                     </div>
                   )}
                 </div>
