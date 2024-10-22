@@ -91,6 +91,7 @@ The extension uses the following tables in Supabase:
    - `team_id` (int, foreign key referencing teams.id)
    - `created_at` (timestamp with time zone)
    - `extracted_text` (text, nullable)
+   - `websiteName` (text)
 
 4. `users` table:
    - `id` (int, primary key)
