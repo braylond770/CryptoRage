@@ -1,4 +1,6 @@
+/* eslint-disable no-undef */
 let capturing = false;
+
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'captureFullPage' && !capturing) {
@@ -17,8 +19,27 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         capturing = false;
       });
     return true; // Indicates we wish to send a response asynchronously
+  } else if (request.action === 'getWebpageContent') {
+    const content = {
+      images: Array.from(document.images)
+        .map(img => img.src)
+        .filter(src => src.startsWith('http')), // Only include valid URLs
+      audio: Array.from(document.getElementsByTagName('audio'))
+        .map(audio => audio.src)
+        .filter(src => src.startsWith('http')),
+      video: Array.from(document.getElementsByTagName('video'))
+        .map(video => video.src)
+        .filter(src => src.startsWith('http')),
+      links: Array.from(document.links)
+        .map(link => link.href)
+        .filter(href => href.startsWith('http'))
+    };
+    sendResponse({ content });
+    return true;
   }
 });
+
+// ... (rest of the code remains the same)
 
 async function captureFullPage(captureWidth) {
   const totalHeight = Math.max(
