@@ -39,7 +39,16 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
 });
 
-// ... (rest of the code remains the same)
+
+
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.action === 'getPageText') {
+    // Get all text content from the page
+    const pageText = document.body.innerText;
+    sendResponse({ text: pageText });
+  }
+
+});
 
 async function captureFullPage(captureWidth) {
   const totalHeight = Math.max(

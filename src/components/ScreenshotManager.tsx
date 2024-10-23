@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiCamera, FiUpload, FiDownload, FiLink, FiTrash2, FiImage, FiX, FiUsers, FiGrid, FiMaximize, FiBell, FiChevronUp, FiChevronDown, FiLoader, FiGlobe } from 'react-icons/fi';
+import { FiCamera, FiUpload, FiDownload, FiLink, FiTrash2, FiImage, FiX, FiUsers, FiGrid, FiMaximize, FiBell, FiChevronUp, FiChevronDown, FiLoader, FiGlobe, FiMoreHorizontal, FiFileText, FiAlignLeft } from 'react-icons/fi';
 import { supabase } from './supabaseClient';
 import TeamManager from './TeamManager';
 import WebpageContentView, { WebpageContent } from './WebpageContentView';
+import TextSummarizer from './TextSummarizer';
+import LoadingBar from './LoadingBar';
 
 const PUBLISHER_URL = 'https://publisher-devnet.walrus.space';
 const AGGREGATOR_URL = 'https://aggregator-devnet.walrus.space';
@@ -49,6 +51,9 @@ const ScreenshotManager: React.FC<ScreenshotManagerProps> = ({ walletAddress }) 
     links: []
   });
   const [activeContentType, setActiveContentType] = useState<keyof WebpageContent | null>(null);
+  const [showExtractedText, setShowExtractedText] = useState(false);
+  const [showSummarizer, setShowSummarizer] = useState(false);
+  const [summary, setSummary] = useState<string | null>(null);
 
   useEffect(() => {
     fetchScreenshots();
@@ -229,6 +234,7 @@ const ScreenshotManager: React.FC<ScreenshotManagerProps> = ({ walletAddress }) 
         async (dataUrl) => {
           setLatestScreenshot(dataUrl);
           await extractTextFromImage(dataUrl);
+          setShowExtractedText(false); // Reset the showExtractedText state
         }
       );
     });
@@ -390,100 +396,169 @@ const ScreenshotManager: React.FC<ScreenshotManagerProps> = ({ walletAddress }) 
     setPreviewScreenshot(null);
   };
 
-  return (
-    <div className="bg-gradient-to-br from-background to-surface text-text w-full h-screen flex flex-col border border-primary/30 rounded-[20px] overflow-hidden shadow-lg">
-      <motion.header 
-        className="bg-gradient-to-r from-primary/20 to-secondary/20 p-4 flex justify-between items-center"
-        initial={{ y: -20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.1 }}
-      >
-        <div className="flex space-x-4">
-          <TabButton icon={<FiCamera size={18} />} label="Capture" isActive={activeTab === 'capture'} onClick={() => setActiveTab('capture')} />
-          <TabButton icon={<FiGrid size={18} />} label="Gallery" isActive={activeTab === 'gallery'} onClick={() => setActiveTab('gallery')} />
-          <TabButton icon={<FiUsers size={18} />} label="Team" isActive={activeTab === 'team'} onClick={() => setActiveTab('team')} />
-          <TabButton icon={<FiGlobe size={18} />} label="Webpage" isActive={activeTab === 'webpage'} onClick={() => setActiveTab('webpage')} />
-        </div>
-       
-      </motion.header>
+  const handleExtractText = () => {
+    setShowExtractedText(true);
+    setShowSummarizer(false);
+    setSummary(null);
+  };
 
-      <main className="flex-grow overflow-y-auto p-4 custom-scrollbar">
-        <AnimatePresence mode="wait">
-          {activeTab === 'capture' && (
-            <motion.div
-              key="capture"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="flex flex-col h-full"
-            >
-              <div className="flex flex-col md:flex-row gap-4">
-                <div className="flex-1 ">
-                  <CaptureArea latestScreenshot={latestScreenshot} onCapture={captureScreenshot} />
-                  <div className="flex flex-col space-y-3 mt-4">
-                    <CaptureButton icon={<FiCamera />} label="Capture Screenshot" onClick={captureScreenshot} />
-                    <CaptureButton2 icon={<FiMaximize />} label="Capture Full Page" onClick={captureFullPageScreenshot} />
-                    <div className="flex space-x-2">
+  const handleSummarizeText = () => {
+    setShowExtractedText(false);
+    setShowSummarizer(true);
+    setSummary(null);
+    
+    chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
+      const activeTab = tabs[0];
+      if (activeTab?.id) {
+        try {
+          await chrome.scripting.executeScript({
+            target: { tabId: activeTab.id },
+            func: () => {
+              // Get page text and limit to 500 words
+              const pageText = document.body.innerText || '';  // Provide default empty string
+              const words = pageText.split(/\s+/);
+              return words.slice(0, 500).join(' ');
+            }
+          }).then((injectionResults) => {
+            if (injectionResults && injectionResults[0]) {
+              const limitedText = injectionResults[0].result;
+              console.log('Limited webpage text (500 words):', limitedText);
+              // Ensure we're setting a string or null, not undefined
+              setExtractedText(limitedText || null);
+            } else {
+              setExtractedText(null);
+            }
+          });
+        } catch (err) {
+          console.error('Failed to execute content script:', err);
+          setError('Failed to access page content. Please make sure you have the necessary permissions.');
+          setExtractedText(null);  // Reset to null on error
+        }
+      } else {
+        console.log('No active tab found:', tabs);
+        setError('No active tab found');
+        setExtractedText(null);  // Reset to null when no tab is found
+      }
+    });
+  };
+  return (
+    <>
+      <LoadingBar isLoading={loading} />
+      <div className="bg-gradient-to-br from-background to-surface text-text w-full h-screen flex flex-col border border-primary/30 rounded-[20px] overflow-hidden shadow-lg">
+        <motion.header 
+          className="bg-gradient-to-r from-primary/20 to-secondary/20 p-4 flex justify-between items-center"
+          initial={{ y: -20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.1 }}
+        >
+          <div className="flex space-x-4">
+            <TabButton icon={<FiCamera size={18} />} label="Capture" isActive={activeTab === 'capture'} onClick={() => setActiveTab('capture')} />
+            <TabButton icon={<FiGrid size={18} />} label="Gallery" isActive={activeTab === 'gallery'} onClick={() => setActiveTab('gallery')} />
+            <TabButton icon={<FiUsers size={18} />} label="Team" isActive={activeTab === 'team'} onClick={() => setActiveTab('team')} />
+            <TabButton icon={<FiGlobe size={18} />} label="Webpage" isActive={activeTab === 'webpage'} onClick={() => setActiveTab('webpage')} />
+          </div>
+         
+        </motion.header>
+
+        <main className="flex-grow overflow-y-auto p-4 custom-scrollbar">
+          <AnimatePresence mode="wait">
+            {activeTab === 'capture' && (
+              <motion.div
+                key="capture"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                className="flex flex-col h-full"
+              >
+                <div className="flex flex-col md:flex-row gap-4">
+                  <div className="flex-1">
+                    <CaptureArea latestScreenshot={latestScreenshot} onCapture={captureScreenshot} />
+                    <div className="flex flex-wrap gap-2 mt-4">
+                      <IconButton icon={<FiCamera />} onClick={captureScreenshot} title="Capture Screenshot" />
+                      <IconButton icon={<FiMaximize />} onClick={captureFullPageScreenshot} title="Capture Full Page" />
                       <TeamSelector
                         teams={userTeams}
                         selectedTeam={selectedTeam}
                         onChange={(e) => setSelectedTeam(e.target.value ? Number(e.target.value) : null)}
                       />
-                      <UploadButton onClick={uploadScreenshot} disabled={!latestScreenshot || loading} loading={loading} />
+                      <UploadButton onClick={uploadScreenshot} disabled={!latestScreenshot || loading} />
+                      <MoreOptionsButton 
+                        onExtractText={handleExtractText}
+                        onSummarizeText={handleSummarizeText}
+                        extractedTextAvailable={!!extractedText}
+                      />
                     </div>
                   </div>
+                  <div className="flex-1 px-2">
+                    {showExtractedText && extractedText && (
+                      <ExtractedTextDisplay text={extractedText} />
+                    )}
+                    {showSummarizer && extractedText && (
+                      <TextSummarizer 
+                        text={extractedText} 
+                        onSummarize={(newSummary) => {
+                          console.log('Summary:', newSummary);
+                          setSummary(newSummary);
+                          setShowSummarizer(false);
+                        }} 
+                      />
+                    )}
+                    {summary && (
+                      <div className="mt-4 bg-surface p-4 rounded-lg shadow">
+                        <h3 className="text-lg font-semibold mb-2">Summary:</h3>
+                        <pre className="whitespace-pre-wrap text-sm">{summary}</pre>
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <div className="flex-1 px-2">
-                  {extractedText && <ExtractedTextDisplay text={extractedText} />}
-                </div>
-              </div>
-            </motion.div>
-          )}
+              </motion.div>
+            )}
 
-          {activeTab === 'gallery' && (
-            <GalleryView
-              screenshots={uploadedScreenshots}
-              onPreview={openPreview}
-              onDownload={downloadScreenshot}
-              onDelete={deleteScreenshot}
-            />
-          )}
-
-          {activeTab === 'team' && (
-            <motion.div
-              key="team"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-            >
-              <TeamManager 
-                walletAddress={walletAddress}
-                onScreenshotCapture={captureScreenshot}
-                latestScreenshot={latestScreenshot}
-                extractedText={extractedText}
+            {activeTab === 'gallery' && (
+              <GalleryView
+                screenshots={uploadedScreenshots}
+                onPreview={openPreview}
+                onDownload={downloadScreenshot}
+                onDelete={deleteScreenshot}
               />
-            </motion.div>
-          )}
-          {activeTab === 'webpage' && (
+            )}
+
+            {activeTab === 'team' && (
+              <motion.div
+                key="team"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+              >
+                <TeamManager 
+                  walletAddress={walletAddress}
+                  onScreenshotCapture={captureScreenshot}
+                  latestScreenshot={latestScreenshot}
+                  extractedText={extractedText}
+                />
+              </motion.div>
+            )}
+            {activeTab === 'webpage' && (
       <WebpageContentView 
         content={webpageContent}
         onCapture={captureScreenshot}
       />
     )}
+          </AnimatePresence>
+        </main>
+
+        {error && <ErrorDisplay message={error} />}
+
+        <AnimatePresence>
+          {previewScreenshot && (
+            <ScreenshotPreview
+              screenshot={previewScreenshot}
+              onClose={closePreview}
+            />
+          )}
         </AnimatePresence>
-      </main>
-
-      {error && <ErrorDisplay message={error} />}
-
-      <AnimatePresence>
-        {previewScreenshot && (
-          <ScreenshotPreview
-            screenshot={previewScreenshot}
-            onClose={closePreview}
-          />
-        )}
-      </AnimatePresence>
-    </div>
+      </div>
+    </>
   );
 };
 
@@ -533,22 +608,13 @@ const CaptureArea: React.FC<{ latestScreenshot: string | null; onCapture: () => 
   </div>
 );
 
-const CaptureButton: React.FC<{ icon: React.ReactNode; label: string; onClick: () => void }> = ({ icon, label, onClick }) => (
+const IconButton: React.FC<{ icon: React.ReactNode; onClick: () => void; title: string }> = ({ icon, onClick, title }) => (
   <button 
     onClick={onClick} 
-    className="bg-gradient-to-r from-primary to-secondary hover:from-primary/80 hover:to-secondary/80 text-white py-2 px-4 rounded-full transition duration-300 flex items-center justify-center"
+    className="bg-primary hover:bg-primary/80 text-white p-2 rounded-full transition duration-300"
+    title={title}
   >
     {icon}
-    <span className="ml-2">{label}</span>
-  </button>
-);
-const CaptureButton2: React.FC<{ icon: React.ReactNode; label: string; onClick: () => void }> = ({ icon, label, onClick }) => (
-  <button 
-    onClick={onClick} 
-    className="bg-gradient-to-l from-primary to-secondary hover:from-primary/80 hover:to-secondary/80 text-white py-2 px-4 rounded-full transition duration-300 flex items-center justify-center"
-  >
-    {icon}
-    <span className="ml-2">{label}</span>
   </button>
 );
 
@@ -565,13 +631,13 @@ const TeamSelector: React.FC<{ teams: { id: number; name: string }[]; selectedTe
   </select>
 );
 
-const UploadButton: React.FC<{ onClick: () => void; disabled: boolean; loading: boolean }> = ({ onClick, disabled, loading }) => (
+const UploadButton: React.FC<{ onClick: () => void; disabled: boolean }> = ({ onClick, disabled }) => (
   <button 
     onClick={onClick} 
     className={`flex-shrink-0 ${disabled ? 'bg-gray-500 cursor-not-allowed' : 'bg-gradient-to-r from-accent-orange to-accent-yellow hover:from-accent-orange/80 hover:to-accent-yellow/80'} text-white py-2 px-4 rounded transition duration-300 flex items-center justify-center`}
     disabled={disabled}
   >
-    {loading ? <div className="fancy-loader"></div> : <FiUpload />}
+    <FiUpload />
   </button>
 );
 
@@ -755,5 +821,92 @@ const ScreenshotPreview: React.FC<{ screenshot: ScreenshotInfo; onClose: () => v
   );
 };
 
+// Custom hook for managing dropdown state
+const useDropdown = () => {
+  const [isOpen, setIsOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (ref.current && !ref.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [ref]);
+
+  return { isOpen, setIsOpen, ref };
+};
+
+const MoreOptionsButton: React.FC<{ 
+  onExtractText: () => void; 
+  onSummarizeText: () => void;
+  extractedTextAvailable: boolean 
+}> = ({ onExtractText, onSummarizeText, extractedTextAvailable }) => {
+  const { isOpen, setIsOpen, ref } = useDropdown();
+
+  return (
+    <div className="relative" ref={ref}>
+      <button 
+        onClick={() => setIsOpen(!isOpen)}
+        className="bg-accent-teal hover:bg-accent-teal/80 text-white p-2 rounded-full transition duration-300"
+        title="More Options"
+      >
+        <FiMoreHorizontal />
+      </button>
+      {isOpen && (
+        <div className="absolute top-full left-0 mt-2 w-48 bg-surface rounded-lg shadow-lg z-10 overflow-hidden">
+          <OptionButton 
+            onClick={() => {
+              onExtractText();
+              setIsOpen(false);
+            }}
+            disabled={!extractedTextAvailable}
+            icon={<FiFileText />}
+            label="Extract Text"
+            tooltip={!extractedTextAvailable ? "No text available to extract" : ""}
+          />
+          <OptionButton 
+            onClick={() => {
+              onSummarizeText();
+              setIsOpen(false);
+            }}
+            disabled={!extractedTextAvailable}
+            icon={<FiAlignLeft />}
+            label="Summarize Text"
+            tooltip={!extractedTextAvailable ? "No text available to summarize" : ""}
+          />
+        </div>
+      )}
+    </div>
+  );
+};
+
+interface OptionButtonProps {
+  onClick: () => void;
+  disabled: boolean;
+  icon: React.ReactNode;
+  label: string;
+  tooltip?: string;
+}
+
+const OptionButton: React.FC<OptionButtonProps> = ({ onClick, disabled, icon, label, tooltip }) => (
+  <button 
+    onClick={onClick}
+    className={`
+      w-full text-left px-4 py-2 hover:bg-primary/20 transition-colors duration-300 
+      flex items-center ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
+    `}
+    disabled={disabled}
+    title={tooltip}
+  >
+    <span className="mr-2">{icon}</span>
+    {label}
+  </button>
+);
 
 export default ScreenshotManager;
