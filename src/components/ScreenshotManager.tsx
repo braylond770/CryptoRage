@@ -470,25 +470,51 @@ const ScreenshotManager: React.FC<ScreenshotManagerProps> = ({ walletAddress }) 
                 exit={{ opacity: 0, y: -20 }}
                 className="flex flex-col h-full"
               >
-                <div className="flex flex-col md:flex-row gap-4">
+                <div className="flex flex-col gap-4">
                   <div className="flex-1">
                     <CaptureArea latestScreenshot={latestScreenshot} onCapture={captureScreenshot} />
-                    <div className="flex flex-wrap gap-2 mt-4">
-                      <IconButton icon={<FiCamera />} onClick={captureScreenshot} title="Capture Screenshot" />
-                      <IconButton icon={<FiMaximize />} onClick={captureFullPageScreenshot} title="Capture Full Page" />
-                      <TeamSelector
-                        teams={userTeams}
-                        selectedTeam={selectedTeam}
-                        onChange={(e) => setSelectedTeam(e.target.value ? Number(e.target.value) : null)}
-                      />
-                      <UploadButton onClick={uploadScreenshot} disabled={!latestScreenshot || loading} />
-                      <MoreOptionsButton 
-                        onExtractText={handleExtractText}
-                        onSummarizeText={handleSummarizeText}
-                        extractedTextAvailable={!!extractedText}
-                      />
+                    
+                    {/* New Button Layout */}
+                    <div className="grid grid-cols-2 gap-4 mt-4">
+                      <div className="col-span-2">
+                        <TeamSelector
+                          teams={userTeams}
+                          selectedTeam={selectedTeam}
+                          onChange={(e) => setSelectedTeam(e.target.value ? Number(e.target.value) : null)}
+                        />
+                      </div>
+                      
+                      <div className="flex gap-2">
+                        <IconButton 
+                          icon={<FiCamera />} 
+                          onClick={captureScreenshot} 
+                          title="Capture Screenshot"
+                          className="flex-1"
+                        />
+                        <IconButton 
+                          icon={<FiMaximize />} 
+                          onClick={captureFullPageScreenshot} 
+                          title="Capture Full Page"
+                          className="flex-1"
+                        />
+                      </div>
+                      
+                      <div className="flex gap-2">
+                        <UploadButton 
+                          onClick={uploadScreenshot} 
+                          disabled={!latestScreenshot || loading}
+                          className="flex-1"
+                        />
+                        <MoreOptionsButton 
+                          onExtractText={handleExtractText}
+                          onSummarizeText={handleSummarizeText}
+                          extractedTextAvailable={!!extractedText}
+                        
+                        />
+                      </div>
                     </div>
                   </div>
+                  
                   <div className="flex-1 px-2">
                     {showExtractedText && extractedText && (
                       <ExtractedTextDisplay text={extractedText} />
@@ -576,7 +602,7 @@ const TabButton: React.FC<{ icon: React.ReactNode; label: string; isActive: bool
 
 
 const CaptureArea: React.FC<{ latestScreenshot: string | null; onCapture: () => void }> = ({ latestScreenshot, onCapture }) => (
-  <div className=" bg-transparent rounded-lg overflow-hidden mb-3 flex items-center justify-center h-64">
+  <div className="bg-transparent rounded-lg overflow-hidden mb-3 flex flex-col items-center justify-center h-64">
     {latestScreenshot ? (
       <img src={latestScreenshot} alt="Latest Screenshot" className="max-w-full max-h-full object-contain" />
     ) : (
@@ -608,21 +634,30 @@ const CaptureArea: React.FC<{ latestScreenshot: string | null; onCapture: () => 
   </div>
 );
 
-const IconButton: React.FC<{ icon: React.ReactNode; onClick: () => void; title: string }> = ({ icon, onClick, title }) => (
+const IconButton: React.FC<{ 
+  icon: React.ReactNode; 
+  onClick: () => void; 
+  title: string;
+  className?: string;
+}> = ({ icon, onClick, title, className }) => (
   <button 
     onClick={onClick} 
-    className="bg-primary hover:bg-primary/80 text-white p-2 rounded-full transition duration-300"
+    className={`bg-primary hover:bg-primary/80 text-white p-3 rounded-lg transition duration-300 flex items-center justify-center ${className}`}
     title={title}
   >
     {icon}
   </button>
 );
 
-const TeamSelector: React.FC<{ teams: { id: number; name: string }[]; selectedTeam: number | null; onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void }> = ({ teams, selectedTeam, onChange }) => (
+const TeamSelector: React.FC<{ 
+  teams: { id: number; name: string }[]; 
+  selectedTeam: number | null; 
+  onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void 
+}> = ({ teams, selectedTeam, onChange }) => (
   <select
     value={selectedTeam?.toString() || ''}
     onChange={onChange}
-    className="bg-surface text-text py-2 px-3 rounded flex-grow border border-primary/30 focus:border-primary focus:outline-none"
+    className="w-full bg-surface text-text py-3 px-4 rounded-lg border border-primary/30 focus:border-primary focus:outline-none"
   >
     <option value="">Select a team (optional)</option>
     {teams.map((team) => (
@@ -631,10 +666,16 @@ const TeamSelector: React.FC<{ teams: { id: number; name: string }[]; selectedTe
   </select>
 );
 
-const UploadButton: React.FC<{ onClick: () => void; disabled: boolean }> = ({ onClick, disabled }) => (
+const UploadButton: React.FC<{ 
+  onClick: () => void; 
+  disabled: boolean;
+  className?: string;
+}> = ({ onClick, disabled, className }) => (
   <button 
     onClick={onClick} 
-    className={`flex-shrink-0 ${disabled ? 'bg-gray-500 cursor-not-allowed' : 'bg-gradient-to-r from-accent-orange to-accent-yellow hover:from-accent-orange/80 hover:to-accent-yellow/80'} text-white py-2 px-4 rounded transition duration-300 flex items-center justify-center`}
+    className={`flex items-center justify-center ${
+      disabled ? 'bg-gray-500 cursor-not-allowed' : 'bg-gradient-to-r from-accent-orange to-accent-yellow hover:from-accent-orange/80 hover:to-accent-yellow/80'
+    } text-white p-3 rounded-lg transition duration-300 ${className}`}
     disabled={disabled}
   >
     <FiUpload />
@@ -845,21 +886,22 @@ const useDropdown = () => {
 const MoreOptionsButton: React.FC<{ 
   onExtractText: () => void; 
   onSummarizeText: () => void;
-  extractedTextAvailable: boolean 
-}> = ({ onExtractText, onSummarizeText, extractedTextAvailable }) => {
+  extractedTextAvailable: boolean;
+  className?: string;
+}> = ({ onExtractText, onSummarizeText, extractedTextAvailable, className }) => {
   const { isOpen, setIsOpen, ref } = useDropdown();
 
   return (
     <div className="relative" ref={ref}>
       <button 
         onClick={() => setIsOpen(!isOpen)}
-        className="bg-accent-teal hover:bg-accent-teal/80 text-white p-2 rounded-full transition duration-300"
+        className={`bg-accent-teal hover:bg-accent-teal/80 text-white p-3 rounded-lg transition duration-300 flex items-center justify-center ${className}`}
         title="More Options"
       >
         <FiMoreHorizontal />
       </button>
       {isOpen && (
-        <div className="absolute top-full left-0 mt-2 w-48 bg-surface rounded-lg shadow-lg z-10 overflow-hidden">
+        <div className="absolute bottom-full right-0 mb-2 w-48 bg-surface rounded-lg shadow-lg z-10 overflow-hidden">
           <OptionButton 
             onClick={() => {
               onExtractText();
@@ -899,13 +941,13 @@ const OptionButton: React.FC<OptionButtonProps> = ({ onClick, disabled, icon, la
     onClick={onClick}
     className={`
       w-full text-left px-4 py-2 hover:bg-primary/20 transition-colors duration-300 
-      flex items-center ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
+      flex items-center gap-2 ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
     `}
     disabled={disabled}
     title={tooltip}
   >
-    <span className="mr-2">{icon}</span>
-    {label}
+    {icon}
+    <span className="whitespace-nowrap">{label}</span>
   </button>
 );
 
