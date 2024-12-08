@@ -175,7 +175,7 @@ const HomePage: React.FC = () => {
 
 
   return (
-    <div className="w-[400px] min-h-[600px]  p-6 flex flex-col relative overflow-hidden rounded-lg shadow-2xl">
+    <div className="w-[400px] min-h-[500px]  p-6 flex flex-col relative overflow-hidden rounded-lg shadow-2xl">
       <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-blue-500/10 to-purple-500/10 pointer-events-none"></div>
       
       {/* Success Message */}

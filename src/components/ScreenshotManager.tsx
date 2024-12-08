@@ -444,7 +444,7 @@ const ScreenshotManager: React.FC<ScreenshotManagerProps> = ({ walletAddress }) 
   return (
     <>
       <LoadingBar isLoading={loading} />
-      <div className="bg-gradient-to-br from-background to-surface text-text w-full h-screen flex flex-col border border-primary/30 custom-scrollbar rounded-[20px] overflow-hidden shadow-lg">
+      <div className="bg-gradient-to-br from-background to-surface text-text w-full h-[500px] flex flex-col border border-primary/30 custom-scrollbar rounded-[20px] overflow-hidden shadow-lg">
         <motion.header 
           className="bg-gradient-to-r from-primary/20 to-secondary/20 p-4 flex justify-between items-center"
           initial={{ y: -20, opacity: 0 }}
