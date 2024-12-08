@@ -100,7 +100,7 @@ const TextSummarizer: React.FC<TextSummarizerProps> = ({ text, onSummarize }) =>
   return (
     <div className="mt-4">
       <div className="mb-4">
-        <label htmlFor="summaryType" className="block text-sm font-medium text-gray-700">Summary Type:</label>
+        <label htmlFor="summaryType" className="block text-sm font-medium  text-slate-200">Summary Type:</label>
         <select
           id="summaryType"
           value={summaryType}
@@ -114,7 +114,7 @@ const TextSummarizer: React.FC<TextSummarizerProps> = ({ text, onSummarize }) =>
         </select>
       </div>
       <div className="mb-4">
-        <label htmlFor="summaryFormat" className="block text-sm font-medium text-gray-700">Format:</label>
+        <label htmlFor="summaryFormat" className="block text-sm font-medium text-slate-200">Format:</label>
         <select
           id="summaryFormat"
           value={summaryFormat}
@@ -126,7 +126,7 @@ const TextSummarizer: React.FC<TextSummarizerProps> = ({ text, onSummarize }) =>
         </select>
       </div>
       <div className="mb-4">
-        <label htmlFor="summaryLength" className="block text-sm font-medium text-gray-700">Length:</label>
+        <label htmlFor="summaryLength" className="block text-sm font-medium text-slate-200">Length:</label>
         <select
           id="summaryLength"
           value={summaryLength}

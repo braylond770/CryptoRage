@@ -91,6 +91,29 @@ const HomePage: React.FC = () => {
 
   const ProfileModal = () => {
     const [newUsername, setNewUsername] = useState(username);
+    const [floatingButtonEnabled, setFloatingButtonEnabled] = useState(true);
+
+    useEffect(() => {
+      // Load the current floating button preference
+      chrome.storage.local.get(['floatingButtonEnabled'], (result) => {
+        setFloatingButtonEnabled(result.floatingButtonEnabled !== false); // Default to true if not set
+      });
+    }, []);
+
+    const handleToggleFloatingButton = (enabled: boolean) => {
+      setFloatingButtonEnabled(enabled);
+      chrome.storage.local.set({ floatingButtonEnabled: enabled }, () => {
+        // Notify content script about the change
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+          if (tabs[0]?.id) {
+            chrome.tabs.sendMessage(tabs[0].id, { 
+              action: 'toggleFloatingButton', 
+              enabled 
+            });
+          }
+        });
+      });
+    };
 
     const handleSaveUsername = async () => {
       try {
@@ -156,6 +179,18 @@ const HomePage: React.FC = () => {
           <p className="bg-background p-2 rounded text-sm mb-4 break-all text-text border border-primary/30">
             {address}
           </p>
+          <div className="flex items-center justify-between mb-4 p-2 bg-background rounded border border-primary/30">
+            <span className="text-text-secondary">Floating Button</span>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                className="sr-only peer"
+                checked={floatingButtonEnabled}
+                onChange={(e) => handleToggleFloatingButton(e.target.checked)}
+              />
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+            </label>
+          </div>
           <button
             onClick={handleSaveUsername}
             className="w-full bg-primary hover:bg-primary/80 text-surface font-bold py-2 px-4 rounded transition duration-300 mb-2"

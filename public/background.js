@@ -38,6 +38,31 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     });
     return true; // Indicates we wish to send a response asynchronously
   }
+  if (request.action === 'saveScreenshot') {
+    chrome.storage.local.get(['connectedAddress'], async (result) => {
+      if (result.connectedAddress) {
+        // Store the screenshot temporarily
+        chrome.storage.local.set({
+          pendingScreenshot: {
+            dataUrl: request.dataUrl,
+            websiteName: request.websiteName
+          }
+        }, () => {
+          // Open the extension popup
+          chrome.action.openPopup();
+        });
+      } else {
+        // Show a notification if user is not connected
+        chrome.notifications.create({
+          type: 'basic',
+          iconUrl: 'icon128.png',
+          title: 'Cryptorage',
+          message: 'Please connect your wallet to save screenshots'
+        });
+      }
+    });
+    return true;
+  }
 });
 
 async function captureFullPage(tabId, sendResponse) {
@@ -117,7 +142,7 @@ function captureVisibleTab(tabId) {
         resolve(dataUrl);
       }
     });
-  });
+  }); 
 }
 
 function stitchScreenshots(screenshots, width, height) {

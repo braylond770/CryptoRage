@@ -81,7 +81,17 @@ const ScreenshotManager: React.FC<ScreenshotManagerProps> = ({ walletAddress }) 
     };
   }, [walletAddress]);
 
- 
+  useEffect(() => {
+    // Check for pending screenshots
+    chrome.storage.local.get(['pendingScreenshot'], (result) => {
+      if (result.pendingScreenshot) {
+        setLatestScreenshot(result.pendingScreenshot.dataUrl);
+        setWebsiteName(result.pendingScreenshot.websiteName);
+        // Clear the pending screenshot
+        chrome.storage.local.remove('pendingScreenshot');
+      }
+    });
+  }, []);
 
   const fetchWebpageContent = () => {
     chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
