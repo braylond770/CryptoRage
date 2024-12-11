@@ -22,7 +22,7 @@ function createFloatingButton() {
       position: fixed;
       right: 0;
       top: 50%;
-      transform: translateY(-50%);
+      
       width: 4px;
       height: 50px;
       background: #FF4444;
@@ -36,8 +36,6 @@ function createFloatingButton() {
     .cryptorage-floating-btn:hover {
       width: 50px;
       height: 50px;
-      right: 20px;
-      border-radius: 50%;
       background: #4F46E5;
     }
 
@@ -52,6 +50,7 @@ function createFloatingButton() {
       justify-content: center;
       opacity: 0;
       transition: opacity 0.3s ease;
+      border-radius: 8px;
     }
 
     .cryptorage-floating-btn:hover .cryptorage-floating-btn-inner {
