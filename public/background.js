@@ -1,69 +1,72 @@
 /* eslint-disable no-undef */
 /// <reference types="chrome"/>
 
+// Replace setInterval with alarm API
+chrome.alarms.create('checkLocalStorage', { periodInMinutes: 1/60 }); // Every second
+chrome.alarms.onAlarm.addListener((alarm) => {
+  if (alarm.name === 'checkLocalStorage') {
+    if (typeof localStorage !== 'undefined') {
+      const address = localStorage.getItem('connectedAddress');
+      if (address) {
+        chrome.storage.local.set({ connectedAddress: address }, () => {
+          console.log('Address saved from localStorage:', address);
+          localStorage.removeItem('connectedAddress');
+        });
+      }
+    }
+  }
+});
+
+// Update message listeners to use addListener properly
 chrome.runtime.onMessageExternal.addListener(
-  (request, sender, sendResponse) => {
+  async (request, sender, sendResponse) => {
     if (request.type === 'WALLET_CONNECTED' && request.address) {
-      chrome.storage.local.set({ connectedAddress: request.address }, () => {
-        console.log('Address saved:', request.address);
-        sendResponse({ success: true });
-      });
-      return true; // Indicates we wish to send a response asynchronously
+      await chrome.storage.local.set({ connectedAddress: request.address });
+      console.log('Address saved:', request.address);
+      sendResponse({ success: true });
     }
   }
 );
 
-// Check localStorage periodically
-setInterval(() => {
-  if (typeof localStorage !== 'undefined') {
-    const address = localStorage.getItem('connectedAddress');
-    if (address) {
-      chrome.storage.local.set({ connectedAddress: address }, () => {
-        console.log('Address saved from localStorage:', address);
-        localStorage.removeItem('connectedAddress');
-      });
-    }
-  }
-}, 1000); // Check every second
-
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'captureTab') {
-    chrome.tabs.captureVisibleTab(null, { format: 'png' }, dataUrl => {
-      if (chrome.runtime.lastError) {
-        console.error('Error in captureVisibleTab:', chrome.runtime.lastError);
-        sendResponse({ error: chrome.runtime.lastError.message });
-      } else {
+    chrome.tabs.captureVisibleTab(null, { format: 'png' })
+      .then(dataUrl => {
         sendResponse({ dataUrl });
-      }
-    });
-    return true; // Indicates we wish to send a response asynchronously
+      })
+      .catch(error => {
+        console.error('Error in captureVisibleTab:', error);
+        sendResponse({ error: error.message });
+      });
+    return true;
   }
+  
   if (request.action === 'saveScreenshot') {
-    chrome.storage.local.get(['connectedAddress'], async (result) => {
-      if (result.connectedAddress) {
-        // Store the screenshot temporarily
-        chrome.storage.local.set({
-          pendingScreenshot: {
-            dataUrl: request.dataUrl,
-            websiteName: request.websiteName
-          }
-        }, () => {
-          // Open the extension popup
-          chrome.action.openPopup();
-        });
-      } else {
-        // Show a notification if user is not connected
-        chrome.notifications.create({
-          type: 'basic',
-          iconUrl: 'icon128.png',
-          title: 'Cryptorage',
-          message: 'Please connect your wallet to save screenshots'
-        });
-      }
-    });
+    handleSaveScreenshot(request, sendResponse);
     return true;
   }
 });
+
+// Move screenshot handling to separate async function
+async function handleSaveScreenshot(request) {
+  const result = await chrome.storage.local.get(['connectedAddress']);
+  if (result.connectedAddress) {
+    await chrome.storage.local.set({
+      pendingScreenshot: {
+        dataUrl: request.dataUrl,
+        websiteName: request.websiteName
+      }
+    });
+    await chrome.action.openPopup();
+  } else {
+    await chrome.notifications.create({
+      type: 'basic',
+      iconUrl: 'icon128.png',
+      title: 'Cryptorage',
+      message: 'Please connect your wallet to save screenshots'
+    });
+  }
+}
 
 async function captureFullPage(tabId, sendResponse) {
   try {

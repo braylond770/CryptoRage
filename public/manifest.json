@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Cryptorage",
   "version": "1.0",
-  "description": "Sui wallet integration for Cryptorage",
+  "description": "A secure browser extension for capturing and storing webpage content with Web3 wallet integration. Save screenshots, media, and text with blockchain-powered authentication.",
   "icons": {
        "128": "./icon128.png"
      },
@@ -11,12 +11,14 @@
   },
   "background": {
     "service_worker": "./background.js"
+    
   },
   "permissions": [
     "storage",
     "notifications",
     "activeTab",
     "scripting",
+    "alarms",
     "tabs",
     "management"
   ],

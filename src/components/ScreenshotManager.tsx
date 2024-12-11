@@ -427,12 +427,12 @@ const ScreenshotManager: React.FC<ScreenshotManagerProps> = ({ walletAddress }) 
               // Get page text and limit to 500 words
               const pageText = document.body.innerText || '';  // Provide default empty string
               const words = pageText.split(/\s+/);
-              return words.slice(0, 500).join(' ');
+              return words.slice(0, 800).join(' ');
             }
           }).then((injectionResults) => {
             if (injectionResults && injectionResults[0]) {
               const limitedText = injectionResults[0].result;
-              console.log('Limited webpage text (500 words):', limitedText);
+              console.log('Limited webpage text (800 words):', limitedText);
               // Ensure we're setting a string or null, not undefined
               setExtractedText(limitedText || null);
             } else {
