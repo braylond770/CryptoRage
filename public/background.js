@@ -17,16 +17,50 @@ chrome.alarms.onAlarm.addListener((alarm) => {
   }
 });
 
-// Update message listeners to use addListener properly
+// FIXED: Update message listeners to handle external messages properly
 chrome.runtime.onMessageExternal.addListener(
-  async (request, sender, sendResponse) => {
+  (request, sender, sendResponse) => {
+    console.log('Received external message:', request);
+    console.log('From sender:', sender);
+    
     if (request.type === 'WALLET_CONNECTED' && request.address) {
-      await chrome.storage.local.set({ connectedAddress: request.address });
-      console.log('Address saved:', request.address);
-      sendResponse({ success: true });
+      // Use async/await properly with sendResponse
+      handleWalletConnection(request, sendResponse);
+      return true; // Keep the message channel open for async response
     }
+    
+    // Send response for unhandled messages
+    sendResponse({ success: false, error: 'Unknown message type' });
   }
 );
+
+// Separate async function to handle wallet connection
+async function handleWalletConnection(request, sendResponse) {
+  try {
+    await chrome.storage.local.set({ 
+      connectedAddress: request.address,
+      chainId: request.chainId,
+      chainName: request.chainName
+    });
+    
+    console.log('Address saved:', request.address);
+    console.log('Chain ID:', request.chainId);
+    console.log('Chain Name:', request.chainName);
+    
+    // Send success response
+    sendResponse({ 
+      success: true, 
+      message: 'Wallet connected successfully',
+      address: request.address 
+    });
+  } catch (error) {
+    console.error('Error saving wallet data:', error);
+    sendResponse({ 
+      success: false, 
+      error: 'Failed to save wallet data' 
+    });
+  }
+}
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'captureTab') {
@@ -169,6 +203,7 @@ function stitchScreenshots(screenshots, width, height) {
     });
   });
 }
+
 chrome.management.getAll((extensions) => {
   console.log(extensions);
 });

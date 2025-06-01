@@ -1,13 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { SuiClient, getFullnodeUrl } from "@mysten/sui/client";
 import ScreenshotManager from "./ScreenshotManager";
 import { FiUser, FiX, FiPower } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "./supabaseClient";
-
-
-const client = new SuiClient({ url: getFullnodeUrl("testnet") });
-
 
 const HomePage: React.FC = () => {
   const [address, setAddress] = useState<string | null>(null);
@@ -30,6 +25,7 @@ const HomePage: React.FC = () => {
       }
     });
   }, []);
+
   useEffect(() => {
     if (address) {
       fetchUsername(address);
@@ -45,7 +41,7 @@ const HomePage: React.FC = () => {
         .single();
 
       if (error) {
-        if (error.code === 'PGRST116') {
+        if (error.code === "PGRST116") {
           // No matching row found, which is fine - the user just doesn't have a username yet
           setUsername("");
         } else {
@@ -68,13 +64,12 @@ const HomePage: React.FC = () => {
     });
   };
 
-
   const handleConnect = () => {
     // Get the extension ID
     const extensionId = chrome.runtime.id;
 
     // Create the URL with the extension ID as a query parameter
-    const url = `https://cryptorage-login.vercel.app?extensionId=${extensionId}`;
+    const url = `https://cryptorage-login.vercel.app/?extensionId=${extensionId}`;
 
     // Open the webpage with the extension ID
     chrome.tabs.create({ url });
@@ -95,7 +90,7 @@ const HomePage: React.FC = () => {
 
     useEffect(() => {
       // Load the current floating button preference
-      chrome.storage.local.get(['floatingButtonEnabled'], (result) => {
+      chrome.storage.local.get(["floatingButtonEnabled"], (result) => {
         setFloatingButtonEnabled(result.floatingButtonEnabled !== false); // Default to true if not set
       });
     }, []);
@@ -106,9 +101,9 @@ const HomePage: React.FC = () => {
         // Notify content script about the change
         chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
           if (tabs[0]?.id) {
-            chrome.tabs.sendMessage(tabs[0].id, { 
-              action: 'toggleFloatingButton', 
-              enabled 
+            chrome.tabs.sendMessage(tabs[0].id, {
+              action: "toggleFloatingButton",
+              enabled,
             });
           }
         });
@@ -156,7 +151,8 @@ const HomePage: React.FC = () => {
           </div>
           {username && (
             <p className="text-text-secondary mb-4">
-              Current username: <span className="font-bold text-primary">{username}</span>
+              Current username:{" "}
+              <span className="font-bold text-primary">{username}</span>
             </p>
           )}
           <div className="mb-4">
@@ -164,7 +160,7 @@ const HomePage: React.FC = () => {
               htmlFor="username"
               className="block text-sm font-medium text-text-secondary mb-1"
             >
-              {username ? 'New Username' : 'Username'}
+              {username ? "New Username" : "Username"}
             </label>
             <input
               type="text"
@@ -172,7 +168,7 @@ const HomePage: React.FC = () => {
               value={newUsername}
               onChange={(e) => setNewUsername(e.target.value)}
               className="w-full bg-background text-text p-2 rounded border border-primary/30 focus:border-primary focus:outline-none"
-              placeholder={username ? 'Enter new username' : 'Enter username'}
+              placeholder={username ? "Enter new username" : "Enter username"}
             />
           </div>
           <p className="text-text-secondary mb-2">Wallet Address:</p>
@@ -195,7 +191,7 @@ const HomePage: React.FC = () => {
             onClick={handleSaveUsername}
             className="w-full bg-primary hover:bg-primary/80 text-surface font-bold py-2 px-4 rounded transition duration-300 mb-2"
           >
-            {username ? 'Update Username' : 'Save Username'}
+            {username ? "Update Username" : "Save Username"}
           </button>
           <button
             onClick={handleDisconnect}
@@ -208,11 +204,10 @@ const HomePage: React.FC = () => {
     );
   };
 
-
   return (
     <div className="w-[400px] min-h-[500px]  p-6 flex flex-col relative overflow-hidden rounded-lg shadow-2xl">
       <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-blue-500/10 to-purple-500/10 pointer-events-none"></div>
-      
+
       {/* Success Message */}
       <AnimatePresence>
         {successMessage && (
