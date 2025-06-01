@@ -1,6 +1,15 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "./supabaseClient";
-import { FiUsers, FiPlus, FiSend, FiImage, FiMoreVertical, FiChevronDown, FiChevronUp, FiDownload } from "react-icons/fi";
+import {
+  FiUsers,
+  FiPlus,
+  FiSend,
+  FiImage,
+  FiMoreVertical,
+  FiChevronDown,
+  FiChevronUp,
+  FiDownload,
+} from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 interface Team {
   id: number;
@@ -26,8 +35,8 @@ interface TeamManagerProps {
   extractedText: string | null;
 }
 
-const PUBLISHER_URL = "https://publisher-devnet.walrus.space";
-const AGGREGATOR_URL = "https://aggregator-devnet.walrus.space";
+const PUBLISHER_URL = "https://suiftly-testnet-pub.mhax.io";
+const AGGREGATOR_URL = "https://aggregator.walrus.testnet.mozcomputing.dev";
 const EPOCHS = "5";
 
 const TeamManager: React.FC<TeamManagerProps> = ({
@@ -45,11 +54,11 @@ const TeamManager: React.FC<TeamManagerProps> = ({
   const [showTeamList, setShowTeamList] = useState(true);
   const [showAddMember, setShowAddMember] = useState(false);
   const [usernames, setUsernames] = useState<Record<string, string>>({});
-  const [expandedTexts, setExpandedTexts] = useState<Record<number, boolean>>({});
+  const [expandedTexts, setExpandedTexts] = useState<Record<number, boolean>>(
+    {}
+  );
   const [previewImage, setPreviewImage] = useState<string | null>(null);
-  const [websiteName, setWebsiteName] = useState<string>('');
-
-  
+  const [websiteName, setWebsiteName] = useState<string>("");
 
   useEffect(() => {
     fetchTeams();
@@ -64,19 +73,19 @@ const TeamManager: React.FC<TeamManagerProps> = ({
   const handleImagePreview = (imageUrl: string) => {
     setPreviewImage(imageUrl);
   };
-  
+
   const handleClosePreview = () => {
     setPreviewImage(null);
   };
-  
+
   const downloadScreenshot = async (screenshot: ScreenshotInfo) => {
     try {
       const response = await fetch(screenshot.blobUrl);
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = url;
-      link.setAttribute('download', screenshot.fileName);
+      link.setAttribute("download", screenshot.fileName);
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -86,11 +95,10 @@ const TeamManager: React.FC<TeamManagerProps> = ({
     }
   };
 
-
   const toggleExpandText = (screenshotId: number) => {
-    setExpandedTexts(prev => ({
+    setExpandedTexts((prev) => ({
       ...prev,
-      [screenshotId]: !prev[screenshotId]
+      [screenshotId]: !prev[screenshotId],
     }));
   };
   const renderExtractedText = (screenshot: ScreenshotInfo) => {
@@ -98,14 +106,16 @@ const TeamManager: React.FC<TeamManagerProps> = ({
 
     const maxLength = 100; // Adjust this value to change the preview length
     const isExpanded = expandedTexts[screenshot.id!] || false;
-    const text = isExpanded ? screenshot.extracted_text : screenshot.extracted_text.slice(0, maxLength);
+    const text = isExpanded
+      ? screenshot.extracted_text
+      : screenshot.extracted_text.slice(0, maxLength);
 
     return (
       <div className="text-sm text-white mt-1 break-words">
         {text}
         {screenshot.extracted_text.length > maxLength && (
           <>
-            {!isExpanded && '...'}
+            {!isExpanded && "..."}
             <button
               onClick={() => toggleExpandText(screenshot.id!)}
               className="text-blue-500 hover:text-blue-700 ml-2"
@@ -284,18 +294,18 @@ const TeamManager: React.FC<TeamManagerProps> = ({
 
       // Save to Supabase
       const { data, error } = await supabase
-      .from("screenshots")
-      .insert({
-        fileName: file.name,
-        blobId,
-        blobUrl,
-        suiUrl,
-        walletAddress,
-        team_id: selectedTeam,
-        created_at: new Date().toISOString(),
-        websiteName: websiteName,
-      })
-      .select();
+        .from("screenshots")
+        .insert({
+          fileName: file.name,
+          blobId,
+          blobUrl,
+          suiUrl,
+          walletAddress,
+          team_id: selectedTeam,
+          created_at: new Date().toISOString(),
+          websiteName: websiteName,
+        })
+        .select();
 
       if (error) throw error;
 
@@ -332,9 +342,7 @@ const TeamManager: React.FC<TeamManagerProps> = ({
     <div className="bg-background text-text h-[480px] flex flex-col rounded-lg overflow-hidden">
       {showTeamList ? (
         <div className="flex-grow overflow-y-auto">
-          <h2 className="text-xl font-bold p-4 bg-surface shadow">
-            Teams
-          </h2>
+          <h2 className="text-xl font-bold p-4 bg-surface shadow">Teams</h2>
           <div className="p-4">
             <div className="flex mb-2">
               <input
@@ -412,19 +420,22 @@ const TeamManager: React.FC<TeamManagerProps> = ({
             </div>
           )}
 
-<div className="flex-grow overflow-y-auto p-2 custom-scrollbar">
+          <div className="flex-grow overflow-y-auto p-2 custom-scrollbar">
             {teamChat.map((screenshot) => (
-              <motion.div 
-                key={screenshot.id} 
+              <motion.div
+                key={screenshot.id}
                 className="mb-4 flex flex-col"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
               >
                 <div className="bg-[#45464a3e] rounded-lg shadow p-3 max-w-[80%] self-start">
                   <div className="text-sm text-text-secondary mb-1 break-words">
-                    {usernames[screenshot.walletAddress] || screenshot.walletAddress}
+                    {usernames[screenshot.walletAddress] ||
+                      screenshot.walletAddress}
                   </div>
-                  <div className="text-xs text-primary mb-1">{screenshot.websiteName}</div>
+                  <div className="text-xs text-primary mb-1">
+                    {screenshot.websiteName}
+                  </div>
                   <div className="relative group">
                     <img
                       src={screenshot.blobUrl}
@@ -442,7 +453,7 @@ const TeamManager: React.FC<TeamManagerProps> = ({
                       </button>
                     </div>
                   </div>
-                  
+
                   {renderExtractedText(screenshot)}
                   <div className="text-xs text-gray-500 text-right">
                     {new Date(screenshot.created_at).toLocaleString()}
@@ -457,8 +468,8 @@ const TeamManager: React.FC<TeamManagerProps> = ({
         <div className="pt-2 h-14 bg-surface border-t border-primary/30">
           <div className="flex items-center">
             <motion.button
-              whileHover={{ scale: 0.80 }}
-              whileTap={{ scale: 0.70 }}
+              whileHover={{ scale: 0.8 }}
+              whileTap={{ scale: 0.7 }}
               onClick={onScreenshotCapture}
               className="bg-primary hover:bg-primary/80 text-background rounded-full p-2 mr-2 transition duration-300"
               disabled={isSending}
@@ -466,8 +477,8 @@ const TeamManager: React.FC<TeamManagerProps> = ({
               <FiImage size={16} />
             </motion.button>
             <motion.button
-            whileHover={{ scale: 0.80 }}
-            whileTap={{ scale: 0.70 }}
+              whileHover={{ scale: 0.8 }}
+              whileTap={{ scale: 0.7 }}
               onClick={sendScreenshot}
               disabled={!latestScreenshot || isSending}
               className={`${
@@ -504,17 +515,17 @@ const TeamManager: React.FC<TeamManagerProps> = ({
           </div>
         </div>
       )}
-      
+
       <AnimatePresence>
         {previewImage && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-background bg-opacity-75 flex items-center justify-center z-50" 
+            className="fixed inset-0 bg-background bg-opacity-75 flex items-center justify-center z-50"
             onClick={handleClosePreview}
           >
-            <motion.div 
+            <motion.div
               initial={{ scale: 0.9 }}
               animate={{ scale: 1 }}
               exit={{ scale: 0.9 }}
@@ -527,7 +538,7 @@ const TeamManager: React.FC<TeamManagerProps> = ({
       </AnimatePresence>
 
       {error && (
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="p-4 bg-error text-background"
